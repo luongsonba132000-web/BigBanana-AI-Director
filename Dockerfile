@@ -21,34 +21,7 @@ RUN npm run build
 FROM nginx:alpine
 
 # 复制自定义 nginx 配置
-COPY <<EOF /etc/nginx/conf.d/default.conf
-server {
-    listen 80;
-    server_name localhost;
-    root /usr/share/nginx/html;
-    index index.html;
-
-    # 启用 gzip 压缩
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-
-    # 处理前端路由
-    location / {
-        try_files \$uri \$uri/ /index.html;
-    }
-
-    # 静态资源缓存
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # 安全头部
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-}
-EOF
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # 从构建阶段复制构建产物到 nginx 目录
 COPY --from=builder /app/dist /usr/share/nginx/html
