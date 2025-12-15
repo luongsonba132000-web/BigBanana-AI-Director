@@ -33,6 +33,16 @@ const MODEL_OPTIONS = [
   { label: '其他 (自定义)', value: 'custom' }
 ];
 
+const VISUAL_STYLE_OPTIONS = [
+  { label: '🎬 真人影视', value: 'live-action', desc: '超写实电影/电视剧风格' },
+  { label: '🌟 日式动漫', value: 'anime', desc: '日本动漫风格，线条感强' },
+  { label: '🎨 2D动画', value: '2d-animation', desc: '经典卓别林/迪士尼风格' },
+  { label: '👾 3D动画', value: '3d-animation', desc: '皮克斯/梦工厂风格' },
+  { label: '🌌 赛博朋克', value: 'cyberpunk', desc: '高科技赛博朋克风' },
+  { label: '🖼️ 油画风格', value: 'oil-painting', desc: '油画质感艺术风' },
+  { label: '✨ 其他 (自定义)', value: 'custom', desc: '手动输入风格' }
+];
+
 const StageScript: React.FC<Props> = ({ project, updateProject }) => {
   const [activeTab, setActiveTab] = useState<TabMode>(project.scriptData ? 'script' : 'story');
   
@@ -41,8 +51,10 @@ const StageScript: React.FC<Props> = ({ project, updateProject }) => {
   const [localDuration, setLocalDuration] = useState(project.targetDuration || '60s');
   const [localLanguage, setLocalLanguage] = useState(project.language || '中文');
   const [localModel, setLocalModel] = useState(project.shotGenerationModel || 'gpt-5.1');
+  const [localVisualStyle, setLocalVisualStyle] = useState(project.visualStyle || 'live-action');
   const [customDurationInput, setCustomDurationInput] = useState('');
   const [customModelInput, setCustomModelInput] = useState('');
+  const [customStyleInput, setCustomStyleInput] = useState('');
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isContinuing, setIsContinuing] = useState(false);
@@ -55,6 +67,7 @@ const StageScript: React.FC<Props> = ({ project, updateProject }) => {
     setLocalDuration(project.targetDuration || '60s');
     setLocalLanguage(project.language || '中文');
     setLocalModel(project.shotGenerationModel || 'gpt-5.1');
+    setLocalVisualStyle(project.visualStyle || 'live-action');
   }, [project.id]);
 
   const handleDurationSelect = (val: string) => {
@@ -71,12 +84,23 @@ const StageScript: React.FC<Props> = ({ project, updateProject }) => {
     }
   };
 
+  const handleVisualStyleSelect = (val: string) => {
+    setLocalVisualStyle(val);
+    if (val === 'custom') {
+      setCustomStyleInput('');
+    }
+  };
+
   const getFinalDuration = () => {
     return localDuration === 'custom' ? customDurationInput : localDuration;
   };
 
   const getFinalModel = () => {
     return localModel === 'custom' ? customModelInput : localModel;
+  };
+
+  const getFinalVisualStyle = () => {
+    return localVisualStyle === 'custom' ? customStyleInput : localVisualStyle;
   };
 
   const handleAnalyze = async () => {
@@ -97,8 +121,15 @@ const StageScript: React.FC<Props> = ({ project, updateProject }) => {
       return;
     }
 
+    const finalVisualStyle = getFinalVisualStyle();
+    if (!finalVisualStyle) {
+      setError("请选择或输入视觉风格。");
+      return;
+    }
+
     console.log('🎯 用户选择的模型:', localModel);
     console.log('🎯 最终使用的模型:', finalModel);
+    console.log('🎨 视觉风格:', finalVisualStyle);
 
     setIsProcessing(true);
     setError(null);
@@ -108,15 +139,17 @@ const StageScript: React.FC<Props> = ({ project, updateProject }) => {
         rawScript: localScript,
         targetDuration: finalDuration,
         language: localLanguage,
+        visualStyle: finalVisualStyle,
         shotGenerationModel: finalModel,
         isParsingScript: true
       });
 
       console.log('📞 调用 parseScriptToData, 传入模型:', finalModel);
-      const scriptData = await parseScriptToData(localScript, localLanguage, finalModel);
+      const scriptData = await parseScriptToData(localScript, localLanguage, finalModel, finalVisualStyle);
       
       scriptData.targetDuration = finalDuration;
       scriptData.language = localLanguage;
+      scriptData.visualStyle = finalVisualStyle;
       scriptData.shotGenerationModel = finalModel;
 
       if (localTitle && localTitle !== "未命名项目") {
@@ -306,6 +339,41 @@ const StageScript: React.FC<Props> = ({ project, updateProject }) => {
                     onChange={(e) => setCustomModelInput(e.target.value)}
                     className="w-full bg-[#141414] border border-zinc-800 text-white px-3 py-2.5 text-sm rounded-md focus:border-zinc-600 focus:outline-none font-mono placeholder:text-zinc-700"
                     placeholder="输入模型名称 (如: gpt-4o)"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Visual Style Selection */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                <Wand2 className="w-3 h-3" />
+                视觉风格
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {VISUAL_STYLE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => handleVisualStyleSelect(opt.value)}
+                    title={opt.desc}
+                    className={`px-2 py-2.5 text-[11px] font-medium rounded-md transition-all text-center border ${
+                      localVisualStyle === opt.value
+                        ? 'bg-zinc-100 text-black border-zinc-100 shadow-sm'
+                        : 'bg-transparent border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {localVisualStyle === 'custom' && (
+                <div className="pt-1">
+                  <input 
+                    type="text"
+                    value={customStyleInput}
+                    onChange={(e) => setCustomStyleInput(e.target.value)}
+                    className="w-full bg-[#141414] border border-zinc-800 text-white px-3 py-2.5 text-sm rounded-md focus:border-zinc-600 focus:outline-none font-mono placeholder:text-zinc-700"
+                    placeholder="输入风格 (如: 水彩风格, 像素艺术)"
                   />
                 </div>
               )}

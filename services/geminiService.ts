@@ -139,8 +139,8 @@ const chatCompletion = async (prompt: string, model: string = 'gpt-5.1', tempera
  * Agent 1 & 2: Script Structuring & Breakdown
  * Uses antsk chat completion for fast, structured text generation.
  */
-export const parseScriptToData = async (rawText: string, language: string = '中文', model: string = 'gpt-5.1'): Promise<ScriptData> => {
-  console.log('📝 parseScriptToData 调用 - 使用模型:', model);
+export const parseScriptToData = async (rawText: string, language: string = '中文', model: string = 'gpt-5.1', visualStyle: string = 'live-action'): Promise<ScriptData> => {
+  console.log('📝 parseScriptToData 调用 - 使用模型:', model, '视觉风格:', visualStyle);
   const startTime = Date.now();
   
   const prompt = `
@@ -190,7 +190,7 @@ export const parseScriptToData = async (rawText: string, language: string = '中
   const genre = parsed.genre || "通用";
 
   // Generate visual prompts for characters and scenes
-  console.log("🎨 正在为角色和场景生成视觉提示词...");
+  console.log("🎨 正在为角色和场景生成视觉提示词...", `风格: ${visualStyle}`);
   
   // Generate character visual prompts
   for (let i = 0; i < characters.length; i++) {
@@ -199,7 +199,7 @@ export const parseScriptToData = async (rawText: string, language: string = '中
       if (i > 0) await new Promise(resolve => setTimeout(resolve, 1500));
       
       console.log(`  生成角色提示词: ${characters[i].name}`);
-      characters[i].visualPrompt = await generateVisualPrompts('character', characters[i], genre, model);
+      characters[i].visualPrompt = await generateVisualPrompts('character', characters[i], genre, model, visualStyle);
     } catch (e) {
       console.error(`Failed to generate visual prompt for character ${characters[i].name}:`, e);
       // Continue with other characters even if one fails
@@ -213,7 +213,7 @@ export const parseScriptToData = async (rawText: string, language: string = '中
       if (i > 0 || characters.length > 0) await new Promise(resolve => setTimeout(resolve, 1500));
       
       console.log(`  生成场景提示词: ${scenes[i].location}`);
-      scenes[i].visualPrompt = await generateVisualPrompts('scene', scenes[i], genre, model);
+      scenes[i].visualPrompt = await generateVisualPrompts('scene', scenes[i], genre, model, visualStyle);
     } catch (e) {
       console.error(`Failed to generate visual prompt for scene ${scenes[i].location}:`, e);
       // Continue with other scenes even if one fails
@@ -261,7 +261,7 @@ export const parseScriptToData = async (rawText: string, language: string = '中
 };
 
 export const generateShotList = async (scriptData: ScriptData, model: string = 'gpt-5.1'): Promise<Shot[]> => {
-  console.log('🎬 generateShotList 调用 - 使用模型:', model);
+  console.log('🎬 generateShotList 调用 - 使用模型:', model, '视觉风格:', scriptData.visualStyle);
   const overallStartTime = Date.now();
   
   if (!scriptData.scenes || scriptData.scenes.length === 0) {
@@ -269,6 +269,8 @@ export const generateShotList = async (scriptData: ScriptData, model: string = '
   }
 
   const lang = scriptData.language || '中文';
+  const visualStyle = scriptData.visualStyle || 'live-action';
+  const stylePrompt = VISUAL_STYLE_PROMPTS[visualStyle] || visualStyle;
   
   // Helper to process a single scene
   // We process per-scene to avoid token limits and parsing errors with large JSONs
@@ -285,6 +287,9 @@ export const generateShotList = async (scriptData: ScriptData, model: string = '
       Act as a professional cinematographer. Generate a detailed shot list (Camera blocking) for Scene ${index + 1}.
       Language for Text Output: ${lang}.
       
+      IMPORTANT VISUAL STYLE: ${stylePrompt}
+      All 'visualPrompt' fields MUST describe shots in this "${visualStyle}" style.
+      
       Scene Details:
       Location: ${scene.location}
       Time: ${scene.time}
@@ -295,6 +300,7 @@ export const generateShotList = async (scriptData: ScriptData, model: string = '
       
       Context:
       Genre: ${scriptData.genre}
+      Visual Style: ${visualStyle} (${stylePrompt})
       Target Duration (Whole Script): ${scriptData.targetDuration || 'Standard'}
       
       Characters:
@@ -306,7 +312,7 @@ export const generateShotList = async (scriptData: ScriptData, model: string = '
       3. 'cameraMovement': Use professional terms (e.g., Dolly In, Pan Right, Static, Handheld, Tracking).
       4. 'shotSize': Specify the field of view (e.g., Extreme Close-up, Medium Shot, Wide Shot).
       5. 'actionSummary': Detailed description of what happens in the shot (in ${lang}).
-      6. 'visualPrompt': Detailed English description for image generation. Keep it under 40 words to save tokens.
+      6. 'visualPrompt': Detailed English description for image generation in ${visualStyle} style. Include style-specific keywords. Keep it under 50 words.
       
       Output ONLY a valid JSON array like:
       [
@@ -319,7 +325,7 @@ export const generateShotList = async (scriptData: ScriptData, model: string = '
           "shotSize": "string",
           "characters": ["string"],
           "keyframes": [
-            {"id": "string", "type": "start|end", "visualPrompt": "string"}
+            {"id": "string", "type": "start|end", "visualPrompt": "string (MUST include ${visualStyle} style keywords)"}
           ]
         }
       ]
@@ -400,11 +406,31 @@ export const generateShotList = async (scriptData: ScriptData, model: string = '
 
 /**
  * Agent 3: Visual Design (Prompt Generation)
+ * Now includes visual style parameter for different rendering styles
  */
-export const generateVisualPrompts = async (type: 'character' | 'scene', data: Character | Scene, genre: string, model: string = 'gpt-5.1'): Promise<string> => {
-   const prompt = `Generate a high-fidelity visual prompt for a ${type} in a ${genre} movie. 
-   Data: ${JSON.stringify(data)}. 
-   Output only the prompt in English, comma-separated, focused on visual details (lighting, texture, appearance).`;
+const VISUAL_STYLE_PROMPTS: { [key: string]: string } = {
+  'live-action': 'photorealistic, cinematic film quality, real human actors, professional cinematography, natural lighting, 8K resolution',
+  'anime': 'Japanese anime style, cel-shaded, vibrant colors, expressive eyes, dynamic poses, Studio Ghibli/Makoto Shinkai quality',
+  '2d-animation': 'classic 2D animation, hand-drawn style, Disney/Pixar quality, smooth lines, expressive characters, painterly backgrounds',
+  '3d-animation': 'high-quality 3D CGI animation, Pixar/DreamWorks style, subsurface scattering, detailed textures, stylized characters',
+  'cyberpunk': 'cyberpunk aesthetic, neon-lit, rain-soaked streets, holographic displays, high-tech low-life, Blade Runner style',
+  'oil-painting': 'oil painting style, visible brushstrokes, rich textures, classical art composition, museum quality fine art',
+};
+
+export const generateVisualPrompts = async (type: 'character' | 'scene', data: Character | Scene, genre: string, model: string = 'gpt-5.1', visualStyle: string = 'live-action'): Promise<string> => {
+   // Get style-specific prompt additions
+   const stylePrompt = VISUAL_STYLE_PROMPTS[visualStyle] || visualStyle;
+   
+   const prompt = `Generate a high-fidelity visual prompt for a ${type} in a ${genre} production.
+   
+   IMPORTANT: The visual style MUST be: ${stylePrompt}
+   
+   ${type === 'character' ? 'For characters: describe their appearance, clothing, pose, expression in this style.' : 'For scenes: describe the environment, lighting, atmosphere in this style.'}
+   
+   Data: ${JSON.stringify(data)}
+   
+   Output only the prompt in English, comma-separated, focused on visual details specific to the "${visualStyle}" style.
+   Make sure to emphasize the ${visualStyle} rendering style throughout the prompt.`;
 
    return await retryOperation(() => chatCompletion(prompt, model, 0.7, 1024));
 };

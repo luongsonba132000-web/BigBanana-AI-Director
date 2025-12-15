@@ -89,6 +89,7 @@ export const createNewProjectState = (): ProjectState => {
     stage: 'script',
     targetDuration: '60s', // Default duration now 60s
     language: '中文', // Default language
+    visualStyle: 'live-action', // Default visual style
     shotGenerationModel: 'gpt-5.1', // Default model
     rawScript: `标题：示例剧本
 

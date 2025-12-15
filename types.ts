@@ -62,7 +62,8 @@ export interface ScriptData {
   genre: string;
   logline: string;
   targetDuration?: string;
-  language?: string; 
+  language?: string;
+  visualStyle?: string; // Visual style: live-action, anime, 3d-animation, etc.
   shotGenerationModel?: string; // Model used for shot generation
   characters: Character[];
   scenes: Scene[];
@@ -95,7 +96,8 @@ export interface ProjectState {
   // Script Phase Data
   rawScript: string;
   targetDuration: string;
-  language: string; 
+  language: string;
+  visualStyle: string; // Visual style: live-action, anime, 3d-animation, etc.
   shotGenerationModel: string; // Model for shot generation
   
   scriptData: ScriptData | null;

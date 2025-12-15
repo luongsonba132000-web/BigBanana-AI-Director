@@ -74,11 +74,24 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
     const kfId = existingKf?.id || `kf-${shot.id}-${type}-${Date.now()}`;
     let prompt = existingKf?.visualPrompt || shot.actionSummary;
     
-    // 为 sora-2 优化 prompt：增加构图、光影、细节描述
-        const selectedModel = shot.videoModel || 'sora-2';
-    if (selectedModel === 'sora-2') {
-      prompt = `${prompt}\n\nVisual Requirements: High definition, cinematic composition, 16:9 widescreen format. Focus on lighting hierarchy, color saturation, and depth of field effects. Ensure the subject is clear and the background transitions naturally.`;
-    }
+    // 获取视觉风格
+    const visualStyle = project.visualStyle || project.scriptData?.visualStyle || 'live-action';
+    
+    // 根据视觉风格添加对应的样式提示
+    const stylePrompts: { [key: string]: string } = {
+      'live-action': 'photorealistic, cinematic film quality, real human actors, professional cinematography, natural lighting, 8K resolution',
+      'anime': 'Japanese anime style, cel-shaded, vibrant colors, expressive eyes, dynamic poses, Studio Ghibli/Makoto Shinkai quality',
+      '2d-animation': 'classic 2D animation, hand-drawn style, Disney/Pixar quality, smooth lines, expressive characters, painterly backgrounds',
+      '3d-animation': 'high-quality 3D CGI animation, Pixar/DreamWorks style, subsurface scattering, detailed textures, stylized characters',
+      'cyberpunk': 'cyberpunk aesthetic, neon-lit, rain-soaked streets, holographic displays, high-tech low-life, Blade Runner style',
+      'oil-painting': 'oil painting style, visible brushstrokes, rich textures, classical art composition, museum quality fine art',
+    };
+    
+    const stylePrompt = stylePrompts[visualStyle] || visualStyle;
+    
+    // 添加视觉风格和画面要求
+    const selectedModel = shot.videoModel || 'sora-2';
+    prompt = `${prompt}\n\nVisual Style: ${stylePrompt}\n\nVisual Requirements: High definition, cinematic composition, 16:9 widescreen format. Focus on lighting hierarchy, color saturation, and depth of field effects. Ensure the subject is clear and the background transitions naturally.`;
     
     const taskType = type === 'start' ? 'kf_start' : 'kf_end';
     const taskIdentifier = { shotId: shot.id, type: taskType };
