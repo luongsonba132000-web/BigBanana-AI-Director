@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BrainCircuit, Wand2, ChevronRight, AlertCircle, Users, MapPin, List, TextQuote, Clock, BookOpen, PenTool, ArrowLeft, Languages, Aperture, AlignLeft } from 'lucide-react';
+import { BrainCircuit, Wand2, ChevronRight, AlertCircle, Users, MapPin, List, TextQuote, Clock, BookOpen, PenTool, ArrowLeft, Languages, Aperture, AlignLeft, Plus, RotateCw } from 'lucide-react';
 import { ProjectState } from '../types';
-import { parseScriptToData, generateShotList } from '../services/geminiService';
+import { parseScriptToData, generateShotList, continueScript, rewriteScript } from '../services/geminiService';
 
 interface Props {
   project: ProjectState;
@@ -45,6 +45,8 @@ const StageScript: React.FC<Props> = ({ project, updateProject }) => {
   const [customModelInput, setCustomModelInput] = useState('');
   
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isContinuing, setIsContinuing] = useState(false);
+  const [isRewriting, setIsRewriting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -139,6 +141,59 @@ const StageScript: React.FC<Props> = ({ project, updateProject }) => {
       updateProject({ isParsingScript: false });
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleContinueScript = async () => {
+    if (!localScript.trim()) {
+      setError("请先输入一些剧本内容作为基础。");
+      return;
+    }
+
+    const finalModel = getFinalModel();
+    if (!finalModel) {
+      setError("请选择或输入模型名称。");
+      return;
+    }
+
+    setIsContinuing(true);
+    setError(null);
+    try {
+      const continuedContent = await continueScript(localScript, localLanguage, finalModel);
+      const newScript = localScript + '\n\n' + continuedContent;
+      setLocalScript(newScript);
+      updateProject({ rawScript: newScript });
+    } catch (err: any) {
+      console.error(err);
+      setError(`AI续写失败: ${err.message || "连接失败"}`);
+    } finally {
+      setIsContinuing(false);
+    }
+  };
+
+  const handleRewriteScript = async () => {
+    if (!localScript.trim()) {
+      setError("请先输入剧本内容。");
+      return;
+    }
+
+    const finalModel = getFinalModel();
+    if (!finalModel) {
+      setError("请选择或输入模型名称。");
+      return;
+    }
+
+    setIsRewriting(true);
+    setError(null);
+    try {
+      const rewrittenContent = await rewriteScript(localScript, localLanguage, finalModel);
+      setLocalScript(rewrittenContent);
+      updateProject({ rawScript: rewrittenContent });
+    } catch (err: any) {
+      console.error(err);
+      setError(`AI改写失败: ${err.message || "连接失败"}`);
+    } finally {
+      setIsRewriting(false);
     }
   };
 
@@ -296,7 +351,51 @@ const StageScript: React.FC<Props> = ({ project, updateProject }) => {
               <div className="w-1.5 h-1.5 rounded-full bg-zinc-700"></div>
               <span className="text-xs font-bold text-zinc-400">剧本编辑器</span>
            </div>
-           <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">MARKDOWN SUPPORTED</span>
+           <div className="flex items-center gap-3">
+              <button
+                onClick={handleContinueScript}
+                disabled={isContinuing || isRewriting || !localScript.trim()}
+                className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all shadow-sm ${
+                  isContinuing || isRewriting || !localScript.trim()
+                    ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                    : 'bg-white text-black hover:bg-zinc-200'
+                }`}
+              >
+                {isContinuing ? (
+                  <>
+                    <BrainCircuit className="w-3.5 h-3.5 animate-spin" />
+                    续写中...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-3.5 h-3.5" />
+                    AI续写
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleRewriteScript}
+                disabled={isContinuing || isRewriting || !localScript.trim()}
+                className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all shadow-sm ${
+                  isContinuing || isRewriting || !localScript.trim()
+                    ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                    : 'bg-white text-black hover:bg-zinc-200'
+                }`}
+              >
+                {isRewriting ? (
+                  <>
+                    <BrainCircuit className="w-3.5 h-3.5 animate-spin" />
+                    改写中...
+                  </>
+                ) : (
+                  <>
+                    <RotateCw className="w-3.5 h-3.5" />
+                    AI改写
+                  </>
+                )}
+              </button>
+              <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">MARKDOWN SUPPORTED</span>
+           </div>
         </div>
         
         <div className="flex-1 overflow-y-auto">
