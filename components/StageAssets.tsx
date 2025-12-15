@@ -456,16 +456,6 @@ const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError })
                       {char.referenceImage ? (
                         <>
                           <img src={char.referenceImage} alt={char.name} className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-sm">
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleGenerateAsset('character', char.id); }}
-                              disabled={generatingIds.has(char.id)}
-                              className="px-2 py-1.5 bg-black/50 text-white text-[9px] font-bold uppercase tracking-wider rounded border border-white/20 hover:bg-white hover:text-black transition-colors backdrop-blur flex items-center gap-1"
-                            >
-                              {generatingIds.has(char.id) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                              {generatingIds.has(char.id) ? '' : '重生成'}
-                            </button>
-                          </div>
                           <div className="absolute top-1.5 right-1.5 p-1 bg-indigo-500 text-white rounded shadow-lg">
                             <Check className="w-3 h-3" />
                           </div>
@@ -492,6 +482,18 @@ const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError })
                       <Shirt className="w-3 h-3" />
                       服装变体
                     </button>
+
+                    {/* Regenerate Button moved below wardrobe */}
+                    {char.referenceImage && (
+                      <button
+                        onClick={() => handleGenerateAsset('character', char.id)}
+                        disabled={generatingIds.has(char.id)}
+                        className="w-full mt-2 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 border border-zinc-800 transition-colors"
+                      >
+                        {generatingIds.has(char.id) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                        {generatingIds.has(char.id) ? '生成中...' : '重新生成图片'}
+                      </button>
+                    )}
                   </div>
 
                   {/* Character Info & Prompt */}
@@ -628,18 +630,10 @@ const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError })
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {project.scriptData.scenes.map((scene) => (
               <div key={scene.id} className="bg-[#141414] border border-zinc-800 rounded-xl overflow-hidden flex flex-col group hover:border-zinc-600 transition-all hover:shadow-lg">
-                <div className="aspect-video bg-zinc-900 relative">
+                <div className="aspect-video bg-zinc-900 relative cursor-pointer" onClick={() => scene.referenceImage && setPreviewImage(scene.referenceImage)}>
                   {scene.referenceImage ? (
                     <>
                       <img src={scene.referenceImage} alt={scene.location} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-sm">
-                         <button 
-                           onClick={() => handleGenerateAsset('scene', scene.id)}
-                           className="px-3 py-1.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider rounded border border-white/20 hover:bg-white hover:text-black transition-colors backdrop-blur"
-                         >
-                           重新生成
-                         </button>
-                      </div>
                       <div className="absolute top-2 right-2 p-1 bg-indigo-500 text-white rounded shadow-lg backdrop-blur">
                         <Check className="w-3 h-3" />
                       </div>
@@ -726,6 +720,20 @@ const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError })
                       </div>
                     )}
                   </div>
+
+                  {/* Regenerate Button */}
+                  {scene.referenceImage && (
+                    <div className="mt-3 pt-3 border-t border-zinc-800">
+                      <button
+                        onClick={() => handleGenerateAsset('scene', scene.id)}
+                        disabled={generatingIds.has(scene.id)}
+                        className="w-full py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 border border-zinc-800 transition-colors"
+                      >
+                        {generatingIds.has(scene.id) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                        {generatingIds.has(scene.id) ? '生成中...' : '重新生成场景'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
