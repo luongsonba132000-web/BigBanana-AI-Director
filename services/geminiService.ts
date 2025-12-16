@@ -283,6 +283,14 @@ export const generateShotList = async (scriptData: ScriptData, model: string = '
 
     if (!paragraphs.trim()) return [];
 
+    // Calculate expected number of shots based on target duration
+    // Each shot = 10 seconds of video, so target duration / 10 = total shots needed
+    const targetDurationStr = scriptData.targetDuration || '60s';
+    const targetSeconds = parseInt(targetDurationStr.replace(/[^\d]/g, '')) || 60;
+    const totalShotsNeeded = Math.round(targetSeconds / 10);
+    const scenesCount = scriptData.scenes.length;
+    const shotsPerScene = Math.max(1, Math.round(totalShotsNeeded / scenesCount));
+    
     const prompt = `
       Act as a professional cinematographer. Generate a detailed shot list (Camera blocking) for Scene ${index + 1}.
       Language for Text Output: ${lang}.
@@ -302,17 +310,20 @@ export const generateShotList = async (scriptData: ScriptData, model: string = '
       Genre: ${scriptData.genre}
       Visual Style: ${visualStyle} (${stylePrompt})
       Target Duration (Whole Script): ${scriptData.targetDuration || 'Standard'}
+      Total Shots Budget: ${totalShotsNeeded} shots (Each shot = 10 seconds of video)
+      Shots for This Scene: Approximately ${shotsPerScene} shots
       
       Characters:
       ${JSON.stringify(scriptData.characters.map(c => ({ id: c.id, name: c.name, desc: c.visualPrompt || c.personality })))}
 
       Instructions:
-      1. Create a sequence of shots covering the action.
-      2. IMPORTANT: Limit to maximum 6-8 shots per scene to prevent JSON truncation errors. If the scene is long, summarize the less critical actions.
-      3. 'cameraMovement': Use professional terms (e.g., Dolly In, Pan Right, Static, Handheld, Tracking).
-      4. 'shotSize': Specify the field of view (e.g., Extreme Close-up, Medium Shot, Wide Shot).
-      5. 'actionSummary': Detailed description of what happens in the shot (in ${lang}).
-      6. 'visualPrompt': Detailed English description for image generation in ${visualStyle} style. Include style-specific keywords. Keep it under 50 words.
+      1. Create EXACTLY ${shotsPerScene} shots (or ${shotsPerScene - 1} to ${shotsPerScene + 1} shots if needed for story flow) for this scene.
+      2. CRITICAL: Each shot will be 10 seconds. Total shots must match the target duration formula: ${targetSeconds} seconds ÷ 10 = ${totalShotsNeeded} total shots across all scenes.
+      3. DO NOT exceed ${shotsPerScene + 1} shots for this scene. Select the most important moments only.
+      4. 'cameraMovement': Use professional terms (e.g., Dolly In, Pan Right, Static, Handheld, Tracking).
+      5. 'shotSize': Specify the field of view (e.g., Extreme Close-up, Medium Shot, Wide Shot).
+      6. 'actionSummary': Detailed description of what happens in the shot (in ${lang}).
+      7. 'visualPrompt': Detailed English description for image generation in ${visualStyle} style. Include style-specific keywords. Keep it under 50 words.
       
       Output ONLY a valid JSON array like:
       [
