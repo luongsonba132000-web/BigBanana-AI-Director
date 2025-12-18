@@ -490,6 +490,20 @@ const StageScript: React.FC<Props> = ({ project, updateProject }) => {
                   />
                 </div>
               )}
+              <div className="pt-1 px-3 py-2 bg-zinc-900/30 border border-zinc-800/50 rounded-md">
+                <p className="text-[10px] text-zinc-500 leading-relaxed">
+                  💡 提示：可以在{' '}
+                  <a 
+                    href="https://api.antsk.cn/pricing" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-zinc-400 hover:text-white underline underline-offset-2 transition-colors font-medium"
+                  >
+                    https://api.antsk.cn/pricing
+                  </a>
+                  {' '}查看更多可用模型
+                </p>
+              </div>
             </div>
 
             {/* Visual Style Selection */}
