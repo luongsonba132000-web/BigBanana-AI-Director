@@ -204,87 +204,164 @@ function App() {
   // API Key Entry Screen (Industrial Design)
   if (!apiKey) {
     return (
-      <div className="h-screen bg-[#050505] flex flex-col items-center justify-center p-8 relative overflow-hidden">
+      <div className="h-screen bg-[#050505] flex relative overflow-hidden">
         {/* Background Accents */}
         <div className="absolute top-0 right-0 p-64 bg-indigo-900/5 blur-[150px] rounded-full pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 p-48 bg-zinc-900/10 blur-[120px] rounded-full pointer-events-none"></div>
 
-        <div className="w-full max-w-md bg-[#0A0A0A] border border-zinc-800 p-8 rounded-xl shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-300">
-          
-          <div className="flex items-center gap-3 mb-8 border-b border-zinc-900 pb-6">
-             <img src={logoImg} alt="Logo" className="w-10 h-10 flex-shrink-0" />
-             <div>
-                <h1 className="text-xl font-bold text-white tracking-wide">BigBanana AI Director</h1>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">Authentication Required</p>
-             </div>
+        {/* Left Side - Feature Showcase */}
+        <div className="flex-1 flex flex-col justify-center px-16 py-12 relative z-10">
+          <div className="max-w-2xl">
+            {/* Logo & Title */}
+            <div className="flex items-center gap-4 mb-12">
+              <img src={logoImg} alt="Logo" className="w-16 h-16 flex-shrink-0" />
+              <div>
+                <h1 className="text-4xl font-bold text-white tracking-tight mb-2">BigBanana AI Director</h1>
+                <p className="text-sm text-zinc-400 font-mono">工业级 AI 漫剧与视频生成工作台</p>
+              </div>
+            </div>
+
+            {/* Core Features */}
+            <div className="space-y-8 mb-12">
+              <div className="bg-[#0A0A0A]/80 border border-zinc-800/50 rounded-xl p-6 backdrop-blur-sm hover:border-indigo-900/50 transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
+                    <span className="text-indigo-400 font-bold text-lg">01</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold text-lg mb-2">关键帧驱动生成</h3>
+                    <p className="text-zinc-400 text-sm leading-relaxed">
+                      先生成精准的起始帧和结束帧，利用 Veo 模型在两帧之间生成平滑视频过渡，摆脱传统 Text-to-Video 的随机性
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#0A0A0A]/80 border border-zinc-800/50 rounded-xl p-6 backdrop-blur-sm hover:border-indigo-900/50 transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
+                    <span className="text-indigo-400 font-bold text-lg">02</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold text-lg mb-2">角色一致性保证</h3>
+                    <p className="text-zinc-400 text-sm leading-relaxed">
+                      为每个角色生成标准定妆照，支持多套造型系统（日常/战斗/受伤），所有画面生成均受角色资产强约束，彻底杜绝人物变形
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#0A0A0A]/80 border border-zinc-800/50 rounded-xl p-6 backdrop-blur-sm hover:border-indigo-900/50 transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
+                    <span className="text-indigo-400 font-bold text-lg">03</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold text-lg mb-2">工业化生产流程</h3>
+                    <p className="text-zinc-400 text-sm leading-relaxed">
+                      剧本拆解 → 资产选角 → 分镜生成 → 视频导出，完整的四阶段工作流，支持精细编辑和批量渲染
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#0A0A0A]/80 border border-zinc-800/50 rounded-xl p-6 backdrop-blur-sm hover:border-indigo-900/50 transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
+                    <span className="text-indigo-400 font-bold text-lg">04</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold text-lg mb-2">本地数据存储</h3>
+                    <p className="text-zinc-400 text-sm leading-relaxed">
+                      基于 IndexedDB 的本地浏览器存储，无后端依赖，数据隐私安全，所有项目和资产均在本地管理
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
 
-          <div className="space-y-6">
-             <div>
-               <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">BigBanana API Key</label>
-               <input 
-                 type="password" 
-                 value={inputKey}
-                 onChange={(e) => {
-                   setInputKey(e.target.value);
-                   setVerifyError('');
-                 }}
-                 onKeyDown={(e) => {
-                   if (e.key === 'Enter' && inputKey.trim() && !isVerifying) {
-                     handleSaveKey();
-                   }
-                 }}
-                 placeholder="Enter your API Key..."
-                 className="w-full bg-[#141414] border border-zinc-800 text-white px-4 py-3 text-sm rounded-lg focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-900 transition-all font-mono placeholder:text-zinc-700"
-                 disabled={isVerifying}
-               />
-               {verifyError && (
-                 <p className="mt-2 text-xs text-red-400 flex items-center gap-2">
-                   <span className="w-1 h-1 bg-red-400 rounded-full"></span>
-                   {verifyError}
-                 </p>
-               )}
-               <p className="mt-3 text-[10px] text-zinc-600 leading-relaxed">
-                  本应用需要 BigBanana API 支持的图片生成和视频生成模型。
-                  <a href="https://api.antsk.cn" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline ml-1">立即购买 API Key</a>
-               </p>
-             </div>
-
-             <button 
-               onClick={handleSaveKey}
-               disabled={!inputKey || isVerifying}
-               className="w-full py-3 bg-white text-black font-bold uppercase tracking-widest text-xs rounded-lg hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-             >
-               {isVerifying ? (
-                 <>
-                   <Loader2 className="w-3 h-3 animate-spin" />
-                   验证中...
-                 </>
-               ) : (
-                 <>
-                   Confirm Access <ArrowRight className="w-3 h-3" />
-                 </>
-               )}
-             </button>
-
-             <div className="flex items-center justify-center gap-2 text-[10px] text-zinc-700 font-mono">
-               <ShieldCheck className="w-3 h-3" />
-               Key is stored locally in your browser
-             </div>
-
-             <div className="pt-6 border-t border-zinc-900 mt-6">
-               <div className="flex flex-col gap-2 text-center text-[10px] text-zinc-600">
-                 <a href="https://tree456.com/" target="_blank" rel="noreferrer" className="hover:text-indigo-400 transition-colors">
-                   官网：tree456.com
-                 </a>
-                 <a href="https://bigbanana.tree456.com/" target="_blank" rel="noreferrer" className="hover:text-indigo-400 transition-colors">
-                   BigBanana产品首页
-                 </a>
-                 <button onClick={() => setShowQrCode(true)} className="hover:text-indigo-400 transition-colors">
-                   联系我们
-                 </button>
+        {/* Right Side - Login Form */}
+        <div className="w-[480px] flex flex-col items-center justify-center p-12 bg-[#0A0A0A]/50 backdrop-blur-xl border-l border-zinc-800/50 relative z-10">
+          <div className="w-full max-w-md bg-[#0A0A0A] border border-zinc-800 p-8 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+            
+            <div className="flex items-center gap-3 mb-8 border-b border-zinc-900 pb-6">
+               <Key className="w-8 h-8 text-indigo-400" />
+               <div>
+                  <h2 className="text-xl font-bold text-white tracking-wide">开始创作</h2>
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">Authentication Required</p>
                </div>
-             </div>
+            </div>
+
+            <div className="space-y-6">
+               <div>
+                 <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">BigBanana API Key</label>
+                 <input 
+                   type="password" 
+                   value={inputKey}
+                   onChange={(e) => {
+                     setInputKey(e.target.value);
+                     setVerifyError('');
+                   }}
+                   onKeyDown={(e) => {
+                     if (e.key === 'Enter' && inputKey.trim() && !isVerifying) {
+                       handleSaveKey();
+                     }
+                   }}
+                   placeholder="Enter your API Key..."
+                   className="w-full bg-[#141414] border border-zinc-800 text-white px-4 py-3 text-sm rounded-lg focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-900 transition-all font-mono placeholder:text-zinc-700"
+                   disabled={isVerifying}
+                 />
+                 {verifyError && (
+                   <p className="mt-2 text-xs text-red-400 flex items-center gap-2">
+                     <span className="w-1 h-1 bg-red-400 rounded-full"></span>
+                     {verifyError}
+                   </p>
+                 )}
+                 <p className="mt-3 text-[10px] text-zinc-600 leading-relaxed">
+                    本应用需要 BigBanana API 支持的图片生成和视频生成模型。
+                    <br />
+                    <a href="https://api.antsk.cn" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline ml-1">立即购买 API Key</a>
+                 </p>
+               </div>
+
+               <button 
+                 onClick={handleSaveKey}
+                 disabled={!inputKey || isVerifying}
+                 className="w-full py-3 bg-white text-black font-bold uppercase tracking-widest text-xs rounded-lg hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+               >
+                 {isVerifying ? (
+                   <>
+                     <Loader2 className="w-3 h-3 animate-spin" />
+                     验证中...
+                   </>
+                 ) : (
+                   <>
+                     Confirm Access <ArrowRight className="w-3 h-3" />
+                   </>
+                 )}
+               </button>
+
+               <div className="flex items-center justify-center gap-2 text-[10px] text-zinc-700 font-mono">
+                 <ShieldCheck className="w-3 h-3" />
+                 Key is stored locally in your browser
+               </div>
+
+               <div className="pt-6 border-t border-zinc-900 mt-6">
+                 <div className="flex flex-col gap-2 text-center text-[10px] text-zinc-600">
+                   <a href="https://tree456.com/" target="_blank" rel="noreferrer" className="hover:text-indigo-400 transition-colors">
+                     官网：tree456.com
+                   </a>
+                   <a href="https://bigbanana.tree456.com/" target="_blank" rel="noreferrer" className="hover:text-indigo-400 transition-colors">
+                     BigBanana产品首页
+                   </a>
+                   <button onClick={() => setShowQrCode(true)} className="hover:text-indigo-400 transition-colors">
+                     联系我们
+                   </button>
+                 </div>
+               </div>
+            </div>
           </div>
         </div>
 
