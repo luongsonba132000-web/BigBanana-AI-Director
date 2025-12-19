@@ -4,6 +4,7 @@ import StageScript from './components/StageScript';
 import StageAssets from './components/StageAssets';
 import StageDirector from './components/StageDirector';
 import StageExport from './components/StageExport';
+import StagePrompts from './components/StagePrompts';
 import Dashboard from './components/Dashboard';
 import { ProjectState } from './types';
 import { Key, Save, CheckCircle, ArrowRight, ShieldCheck, Loader2, X } from 'lucide-react';
@@ -183,7 +184,7 @@ function App() {
     });
   };
 
-  const setStage = (stage: 'script' | 'assets' | 'director' | 'export') => {
+  const setStage = (stage: 'script' | 'assets' | 'director' | 'export' | 'prompts') => {
     updateProject({ stage });
   };
 
@@ -210,6 +211,8 @@ function App() {
         return <StageDirector project={project} updateProject={updateProject} />;
       case 'export':
         return <StageExport project={project} />;
+      case 'prompts':
+        return <StagePrompts project={project} updateProject={updateProject} />;
       default:
         return <div className="text-white">未知阶段</div>;
     }

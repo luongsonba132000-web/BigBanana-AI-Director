@@ -1,10 +1,10 @@
 import React from 'react';
-import { LayoutDashboard, FileText, Users, Clapperboard, Film, Settings, ChevronLeft } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Clapperboard, Film, Settings, ChevronLeft, ListTree } from 'lucide-react';
 import logoImg from '../logo.png';
 
 interface SidebarProps {
   currentStage: string;
-  setStage: (stage: 'script' | 'assets' | 'director' | 'export') => void;
+  setStage: (stage: 'script' | 'assets' | 'director' | 'export' | 'prompts') => void;
   onExit: () => void;
   projectName?: string;
 }
@@ -15,6 +15,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentStage, setStage, onExit, proje
     { id: 'assets', label: '角色与场景', icon: Users, sub: 'Phase 02' },
     { id: 'director', label: '导演工作台', icon: Clapperboard, sub: 'Phase 03' },
     { id: 'export', label: '成片与导出', icon: Film, sub: 'Phase 04' },
+    { id: 'prompts', label: '提示词管理', icon: ListTree, sub: 'Advanced' },
   ];
 
   return (
