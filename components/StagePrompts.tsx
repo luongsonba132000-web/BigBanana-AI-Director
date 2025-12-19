@@ -13,7 +13,7 @@ const StagePrompts: React.FC<StagePromptsProps> = ({ project, updateProject }) =
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState<PromptCategory>('all');
   const [editingPrompt, setEditingPrompt] = useState<{
-    type: 'character' | 'character-variation' | 'scene' | 'keyframe';
+    type: 'character' | 'character-variation' | 'scene' | 'keyframe' | 'video';
     id: string;
     variationId?: string;
     shotId?: string;
@@ -32,7 +32,7 @@ const StagePrompts: React.FC<StagePromptsProps> = ({ project, updateProject }) =
   };
 
   const handleStartEdit = (
-    type: 'character' | 'character-variation' | 'scene' | 'keyframe',
+    type: 'character' | 'character-variation' | 'scene' | 'keyframe' | 'video',
     id: string,
     currentValue: string,
     variationId?: string,
@@ -92,6 +92,16 @@ const StagePrompts: React.FC<StagePromptsProps> = ({ project, updateProject }) =
                   ? { ...kf, visualPrompt: editingPrompt.value }
                   : kf
               )
+            };
+          }
+          return shot;
+        });
+      } else if (editingPrompt.type === 'video') {
+        newProject.shots = newProject.shots.map(shot => {
+          if (shot.id === editingPrompt.shotId) {
+            return {
+              ...shot,
+              interval: shot.interval ? { ...shot.interval, videoPrompt: editingPrompt.value } : undefined
             };
           }
           return shot;
@@ -444,6 +454,84 @@ const StagePrompts: React.FC<StagePromptsProps> = ({ project, updateProject }) =
                         )}
                       </div>
                     ))}
+
+                    {/* Video Prompt Section */}
+                    {shot.interval && shot.interval.videoUrl && (
+                      <div className="mt-3 pt-3 border-t border-zinc-800/50">
+                        <div className="bg-purple-950/30 border border-purple-500/30 rounded p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/30">
+                                视频生成提示词
+                              </span>
+                              <span className={`text-xs px-2 py-0.5 rounded ${
+                                shot.interval.status === 'completed' ? 'text-green-400 bg-green-500/10' :
+                                shot.interval.status === 'generating' ? 'text-yellow-400 bg-yellow-500/10' :
+                                shot.interval.status === 'failed' ? 'text-red-400 bg-red-500/10' :
+                                'text-zinc-500'
+                              }`}>
+                                {shot.interval.status === 'completed' ? '✓ 已生成' :
+                                 shot.interval.status === 'generating' ? '生成中' :
+                                 shot.interval.status === 'failed' ? '失败' :
+                                 '待生成'}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => {
+                                // 如果没有保存的提示词，使用动作摘要作为默认值
+                                const defaultPrompt = shot.interval!.videoPrompt || 
+                                  `${shot.actionSummary}\n\n镜头运动：${shot.cameraMovement}\n模型：${shot.videoModel || 'sora-2'}`;
+                                handleStartEdit('video', shot.interval!.id, defaultPrompt, undefined, shot.id);
+                              }}
+                              className="text-xs text-purple-400 hover:text-purple-300 px-2 py-0.5 border border-purple-500/30 rounded hover:bg-purple-500/10 transition-colors"
+                            >
+                              编辑
+                            </button>
+                          </div>
+
+                          {editingPrompt?.type === 'video' && 
+                           editingPrompt.shotId === shot.id ? (
+                            <div className="space-y-2">
+                              <textarea
+                                value={editingPrompt.value}
+                                onChange={(e) => setEditingPrompt({ ...editingPrompt, value: e.target.value })}
+                                className="w-full bg-zinc-800 text-white p-2 rounded border border-zinc-700 focus:border-purple-500 focus:outline-none min-h-[120px] text-xs font-mono"
+                                placeholder="视频生成提示词"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={handleSaveEdit}
+                                  className="flex items-center gap-1 px-2 py-1 bg-purple-500 hover:bg-purple-600 text-white text-xs rounded transition-colors"
+                                >
+                                  <Save className="w-3 h-3" />
+                                  保存
+                                </button>
+                                <button
+                                  onClick={handleCancelEdit}
+                                  className="flex items-center gap-1 px-2 py-1 bg-zinc-700 hover:bg-zinc-600 text-white text-xs rounded transition-colors"
+                                >
+                                  <X className="w-3 h-3" />
+                                  取消
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <p className="text-xs text-zinc-400 font-mono whitespace-pre-wrap">
+                                {shot.interval.videoPrompt || (
+                                  <span className="text-zinc-500">
+                                    {`${shot.actionSummary}\n\n镜头运动：${shot.cameraMovement}\n使用模型：${shot.videoModel || 'sora-2'}`}
+                                    <span className="block mt-1 text-yellow-600/70">
+                                      ⚠ 此视频生成时未保存提示词，以上为推测内容
+                                    </span>
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

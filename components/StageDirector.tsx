@@ -388,15 +388,16 @@ Technical Requirements:
     
     const intervalId = shot.interval?.id || `int-${shot.id}-${Date.now()}`;
     
-    // 设置视频生成状态为generating
+    // 设置视频生成状态为generating，并保存提示词
     updateShot(shot.id, (s) => ({
       ...s,
-      interval: s.interval ? { ...s.interval, status: 'generating' } : {
+      interval: s.interval ? { ...s.interval, status: 'generating', videoPrompt } : {
         id: intervalId,
         startKeyframeId: sKf.id,
         endKeyframeId: eKf?.id || '',
         duration: 10,
         motionStrength: 5,
+        videoPrompt,
         status: 'generating'
       }
     }));
@@ -417,6 +418,7 @@ Technical Requirements:
           endKeyframeId: eKf?.id || '',
           duration: 10,
           motionStrength: 5,
+          videoPrompt,
           videoUrl,
           status: 'completed'
         }
