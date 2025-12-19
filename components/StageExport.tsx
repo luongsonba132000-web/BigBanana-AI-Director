@@ -387,12 +387,12 @@ const StageExport: React.FC<Props> = ({ project, onApiKeyError }) => {
               </div>
 
               {/* Video Player */}
-              <div className="flex-1 bg-black relative flex items-center justify-center" style={{ minHeight: '60vh', maxHeight: '70vh' }}>
+              <div className="bg-black relative flex items-center justify-center overflow-hidden" style={{ height: '60vh' }}>
                 <video
                   ref={videoRef}
                   key={currentShot.id}
                   src={currentShot.interval?.videoUrl}
-                  className="w-full h-full object-contain"
+                  className="max-w-full max-h-full object-contain"
                   autoPlay
                   controls={false}
                   playsInline
