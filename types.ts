@@ -2,6 +2,7 @@ export interface CharacterVariation {
   id: string;
   name: string; // e.g., "Casual", "Tactical Gear", "Injured"
   visualPrompt: string;
+  negativePrompt?: string; // 负面提示词，用于排除不想要的元素
   referenceImage?: string; // 角色变体参考图，存储为base64格式（data:image/png;base64,...）
 }
 
@@ -12,6 +13,8 @@ export interface Character {
   age: string;
   personality: string;
   visualPrompt?: string;
+  negativePrompt?: string; // 负面提示词，用于排除不想要的元素
+  coreFeatures?: string; // 核心固定特征，用于保持角色一致性
   referenceImage?: string; // 角色基础参考图，存储为base64格式（data:image/png;base64,...）
   variations: CharacterVariation[]; // Added: List of alternative looks
 }
@@ -22,6 +25,7 @@ export interface Scene {
   time: string;
   atmosphere: string;
   visualPrompt?: string;
+  negativePrompt?: string; // 负面提示词，用于排除不想要的元素
   referenceImage?: string; // 场景参考图，存储为base64格式（data:image/png;base64,...）
 }
 

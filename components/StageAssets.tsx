@@ -53,27 +53,43 @@ const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError })
         const char = project.scriptData?.characters.find(c => String(c.id) === String(id));
         if (char) {
           // Use existing prompt or generate new one
-          prompt = char.visualPrompt || await generateVisualPrompts('character', char, project.scriptData?.genre || 'Cinematic', 'gpt-5.1', visualStyle, language);
-          
-          // Save the prompt if it was generated
-          if (!char.visualPrompt && prompt && project.scriptData) {
-            const newData = { ...project.scriptData };
-            const c = newData.characters.find(c => String(c.id) === String(id));
-            if (c) c.visualPrompt = prompt;
-            updateProject({ scriptData: newData });
+          if (char.visualPrompt) {
+            prompt = char.visualPrompt;
+          } else {
+            const prompts = await generateVisualPrompts('character', char, project.scriptData?.genre || 'Cinematic', 'gpt-5.1', visualStyle, language);
+            prompt = prompts.visualPrompt;
+            
+            // Save the prompts if they were generated
+            if (project.scriptData) {
+              const newData = { ...project.scriptData };
+              const c = newData.characters.find(c => String(c.id) === String(id));
+              if (c) {
+                c.visualPrompt = prompts.visualPrompt;
+                c.negativePrompt = prompts.negativePrompt;
+              }
+              updateProject({ scriptData: newData });
+            }
           }
         }
       } else {
         const scene = project.scriptData?.scenes.find(s => String(s.id) === String(id));
         if (scene) {
-          prompt = scene.visualPrompt || await generateVisualPrompts('scene', scene, project.scriptData?.genre || 'Cinematic', 'gpt-5.1', visualStyle, language);
-          
-          // Save the prompt if it was generated
-          if (!scene.visualPrompt && prompt && project.scriptData) {
-            const newData = { ...project.scriptData };
-            const s = newData.scenes.find(s => String(s.id) === String(id));
-            if (s) s.visualPrompt = prompt;
-            updateProject({ scriptData: newData });
+          if (scene.visualPrompt) {
+            prompt = scene.visualPrompt;
+          } else {
+            const prompts = await generateVisualPrompts('scene', scene, project.scriptData?.genre || 'Cinematic', 'gpt-5.1', visualStyle, language);
+            prompt = prompts.visualPrompt;
+            
+            // Save the prompts if they were generated
+            if (project.scriptData) {
+              const newData = { ...project.scriptData };
+              const s = newData.scenes.find(s => String(s.id) === String(id));
+              if (s) {
+                s.visualPrompt = prompts.visualPrompt;
+                s.negativePrompt = prompts.negativePrompt;
+              }
+              updateProject({ scriptData: newData });
+            }
           }
         }
       }

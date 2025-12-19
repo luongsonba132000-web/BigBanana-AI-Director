@@ -226,7 +226,9 @@ export const parseScriptToData = async (rawText: string, language: string = '中
       if (i > 0) await new Promise(resolve => setTimeout(resolve, 1500));
       
       console.log(`  生成角色提示词: ${characters[i].name}`);
-      characters[i].visualPrompt = await generateVisualPrompts('character', characters[i], genre, model, visualStyle, language);
+      const prompts = await generateVisualPrompts('character', characters[i], genre, model, visualStyle, language);
+      characters[i].visualPrompt = prompts.visualPrompt;
+      characters[i].negativePrompt = prompts.negativePrompt;
     } catch (e) {
       console.error(`Failed to generate visual prompt for character ${characters[i].name}:`, e);
       // Continue with other characters even if one fails
@@ -240,7 +242,9 @@ export const parseScriptToData = async (rawText: string, language: string = '中
       if (i > 0 || characters.length > 0) await new Promise(resolve => setTimeout(resolve, 1500));
       
       console.log(`  生成场景提示词: ${scenes[i].location}`);
-      scenes[i].visualPrompt = await generateVisualPrompts('scene', scenes[i], genre, model, visualStyle, language);
+      const prompts = await generateVisualPrompts('scene', scenes[i], genre, model, visualStyle, language);
+      scenes[i].visualPrompt = prompts.visualPrompt;
+      scenes[i].negativePrompt = prompts.negativePrompt;
     } catch (e) {
       console.error(`Failed to generate visual prompt for scene ${scenes[i].location}:`, e);
       // Continue with other scenes even if one fails
@@ -495,6 +499,19 @@ const VISUAL_STYLE_PROMPTS: { [key: string]: string } = {
 };
 
 /**
+ * 负面提示词，用于排除不想要的视觉元素
+ * 根据不同视觉风格定义需要避免的内容
+ */
+const NEGATIVE_PROMPTS: { [key: string]: string } = {
+  'live-action': 'cartoon, anime, illustration, painting, drawing, 3d render, cgi, low quality, blurry, grainy, watermark, text, logo, signature, distorted face, bad anatomy, extra limbs, mutated hands, deformed, ugly, disfigured, poorly drawn, amateur',
+  'anime': 'photorealistic, 3d render, western cartoon, ugly, bad anatomy, extra limbs, deformed limbs, blurry, watermark, text, logo, poorly drawn face, mutated hands, extra fingers, missing fingers, bad proportions, grotesque',
+  '2d-animation': 'photorealistic, 3d, low quality, pixelated, blurry, watermark, text, bad anatomy, deformed, ugly, amateur drawing, inconsistent style, rough sketch',
+  '3d-animation': 'photorealistic, 2d, flat, hand-drawn, low poly, bad topology, texture artifacts, z-fighting, clipping, low quality, blurry, watermark, text, bad rigging, unnatural movement',
+  'cyberpunk': 'bright daylight, pastoral, medieval, fantasy, cartoon, low tech, rural, natural, watermark, text, logo, low quality, blurry, amateur',
+  'oil-painting': 'digital art, photorealistic, 3d render, cartoon, anime, low quality, blurry, watermark, text, amateur, poorly painted, muddy colors, overworked canvas',
+};
+
+/**
  * 生成角色或场景的视觉提示词
  * 根据指定的视觉风格和语言，为角色或场景生成详细的视觉描述
  * @param type - 类型，'character'（角色）或'scene'（场景）
@@ -503,24 +520,81 @@ const VISUAL_STYLE_PROMPTS: { [key: string]: string } = {
  * @param model - 使用的AI模型，默认'gpt-5.1'
  * @param visualStyle - 视觉风格，如'live-action'、'anime'等，默认'live-action'
  * @param language - 输出语言，默认'中文'
- * @returns 返回指定语言的视觉提示词，用于图像生成
+ * @returns 返回包含visualPrompt和negativePrompt的对象
  */
-export const generateVisualPrompts = async (type: 'character' | 'scene', data: Character | Scene, genre: string, model: string = 'gpt-5.1', visualStyle: string = 'live-action', language: string = '中文'): Promise<string> => {
-   // Get style-specific prompt additions
+export const generateVisualPrompts = async (type: 'character' | 'scene', data: Character | Scene, genre: string, model: string = 'gpt-5.1', visualStyle: string = 'live-action', language: string = '中文'): Promise<{ visualPrompt: string; negativePrompt: string }> => {
    const stylePrompt = VISUAL_STYLE_PROMPTS[visualStyle] || visualStyle;
+   const negativePrompt = NEGATIVE_PROMPTS[visualStyle] || NEGATIVE_PROMPTS['live-action'];
    
-   const prompt = `Generate a high-fidelity visual prompt for a ${type} in a ${genre} production.
+   let prompt: string;
    
-   IMPORTANT: The visual style MUST be: ${stylePrompt}
-   
-   ${type === 'character' ? 'For characters: describe their appearance, clothing, pose, expression in this style.' : 'For scenes: describe the environment, lighting, atmosphere in this style.'}
-   
-   Data: ${JSON.stringify(data)}
-   
-   Output only the prompt in ${language}, comma-separated, focused on visual details specific to the "${visualStyle}" style.
-   Make sure to emphasize the ${visualStyle} rendering style throughout the prompt.`;
+   if (type === 'character') {
+     const char = data as Character;
+     prompt = `You are an expert AI prompt engineer for ${visualStyle} style image generation.
 
-   return await retryOperation(() => chatCompletion(prompt, model, 0.7, 1024));
+Create a detailed visual prompt for a character with the following structure:
+
+Character Data:
+- Name: ${char.name}
+- Gender: ${char.gender}
+- Age: ${char.age}
+- Personality: ${char.personality}
+
+REQUIRED STRUCTURE (output in ${language}):
+1. Core Identity: [ethnicity, age, gender, body type]
+2. Facial Features: [specific distinguishing features - eyes, nose, face shape, skin tone]
+3. Hairstyle: [detailed hair description - color, length, style]
+4. Clothing: [detailed outfit appropriate for ${genre} genre]
+5. Pose & Expression: [body language and facial expression matching personality]
+6. Technical Quality: ${stylePrompt}
+
+CRITICAL RULES:
+- Sections 1-3 are FIXED features for consistency across all variations
+- Use specific, concrete visual details
+- Output as single paragraph, comma-separated
+- MUST include style keywords: ${visualStyle}
+- Length: 60-90 words
+- Focus on visual details that can be rendered in images
+
+Output ONLY the visual prompt text, no explanations.`;
+   } else {
+     const scene = data as Scene;
+     prompt = `You are an expert cinematographer and AI prompt engineer for ${visualStyle} productions.
+
+Create a cinematic scene prompt with this structure:
+
+Scene Data:
+- Location: ${scene.location}
+- Time: ${scene.time}
+- Atmosphere: ${scene.atmosphere}
+- Genre: ${genre}
+
+REQUIRED STRUCTURE (output in ${language}):
+1. Environment: [detailed location description with architectural/natural elements]
+2. Lighting: [specific lighting setup - direction, color temperature, quality (soft/hard), key light source]
+3. Composition: [camera angle (eye-level/low/high), framing rules (rule of thirds/symmetry), depth layers]
+4. Atmosphere: [mood, weather, particles in air (fog/dust/rain), environmental effects]
+5. Color Palette: [dominant colors, color temperature (warm/cool), saturation level]
+6. Technical Quality: ${stylePrompt}
+
+CRITICAL RULES:
+- Use professional cinematography terminology
+- Specify light sources and direction (e.g., "golden hour backlight from right")
+- Include composition guidelines (rule of thirds, leading lines, depth of field)
+- Output as single paragraph, comma-separated
+- MUST emphasize ${visualStyle} style throughout
+- Length: 70-110 words
+- Focus on elements that establish mood and cinematic quality
+
+Output ONLY the visual prompt text, no explanations.`;
+   }
+
+   const visualPrompt = await retryOperation(() => chatCompletion(prompt, model, 0.7, 1024));
+   
+   return {
+     visualPrompt: visualPrompt.trim(),
+     negativePrompt: negativePrompt
+   };
 };
 
 /**
