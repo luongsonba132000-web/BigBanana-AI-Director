@@ -981,7 +981,7 @@ Technical Requirements:
                                                    title="使用上一镜头的结束帧"
                                                    className="text-[10px] text-emerald-400 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                                >
-                                                   ← 使用结束帧
+                                                   ←
                                                </button>
                                            )}
                                            <button 
