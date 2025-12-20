@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, X, Film, Edit2, MessageSquare } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Film, Edit2, MessageSquare, Sparkles, Loader2 } from 'lucide-react';
 import { Shot, Character, Scene, ProjectState } from '../../types';
 import SceneContext from './SceneContext';
 import KeyframeEditor from './KeyframeEditor';
@@ -10,10 +10,12 @@ interface ShotWorkbenchProps {
   shotIndex: number;
   totalShots: number;
   scriptData?: ProjectState['scriptData'];
+  isAIOptimizing?: boolean;
   onClose: () => void;
   onPrevious: () => void;
   onNext: () => void;
   onEditActionSummary: () => void;
+  onGenerateAIAction: () => void;
   onAddCharacter: (charId: string) => void;
   onRemoveCharacter: (charId: string) => void;
   onVariationChange: (charId: string, varId: string) => void;
@@ -21,6 +23,8 @@ interface ShotWorkbenchProps {
   onGenerateKeyframe: (type: 'start' | 'end') => void;
   onUploadKeyframe: (type: 'start' | 'end') => void;
   onEditKeyframePrompt: (type: 'start' | 'end', prompt: string) => void;
+  onOptimizeKeyframeWithAI: (type: 'start' | 'end') => void;
+  onOptimizeBothKeyframes: () => void;
   onCopyPreviousEndFrame: () => void;
   onGenerateVideo: () => void;
   onModelChange: (model: 'sora-2' | 'veo_3_1_i2v_s_fast_fl_landscape') => void;
@@ -33,10 +37,12 @@ const ShotWorkbench: React.FC<ShotWorkbenchProps> = ({
   shotIndex,
   totalShots,
   scriptData,
+  isAIOptimizing = false,
   onClose,
   onPrevious,
   onNext,
   onEditActionSummary,
+  onGenerateAIAction,
   onAddCharacter,
   onRemoveCharacter,
   onVariationChange,
@@ -44,6 +50,8 @@ const ShotWorkbench: React.FC<ShotWorkbenchProps> = ({
   onGenerateKeyframe,
   onUploadKeyframe,
   onEditKeyframePrompt,
+  onOptimizeKeyframeWithAI,
+  onOptimizeBothKeyframes,
   onCopyPreviousEndFrame,
   onGenerateVideo,
   onModelChange,
@@ -122,13 +130,27 @@ const ShotWorkbench: React.FC<ShotWorkbenchProps> = ({
             <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
               叙事动作 (Action & Dialogue)
             </h4>
-            <button 
-              onClick={onEditActionSummary}
-              className="p-1 text-yellow-400 hover:text-white transition-colors ml-auto"
-              title="编辑叙事动作"
-            >
-              <Edit2 className="w-3 h-3" />
-            </button>
+            <div className="ml-auto flex items-center gap-1">
+              <button 
+                onClick={onGenerateAIAction}
+                disabled={isAIOptimizing}
+                className="p-1 text-indigo-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="AI生成动作建议"
+              >
+                {isAIOptimizing ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3 h-3" />
+                )}
+              </button>
+              <button 
+                onClick={onEditActionSummary}
+                className="p-1 text-yellow-400 hover:text-white transition-colors"
+                title="编辑叙事动作"
+              >
+                <Edit2 className="w-3 h-3" />
+              </button>
+            </div>
           </div>
           
           <div className="space-y-3 max-h-[200px] overflow-y-auto custom-scrollbar">
@@ -154,9 +176,12 @@ const ShotWorkbench: React.FC<ShotWorkbenchProps> = ({
           startKeyframe={startKf}
           endKeyframe={endKf}
           canCopyPrevious={shotIndex > 0}
+          isAIOptimizing={isAIOptimizing}
           onGenerateKeyframe={onGenerateKeyframe}
           onUploadKeyframe={onUploadKeyframe}
           onEditPrompt={onEditKeyframePrompt}
+          onOptimizeWithAI={onOptimizeKeyframeWithAI}
+          onOptimizeBothWithAI={onOptimizeBothKeyframes}
           onCopyPrevious={onCopyPreviousEndFrame}
           onImageClick={onImageClick}
         />

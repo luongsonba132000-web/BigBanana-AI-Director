@@ -1,14 +1,17 @@
 import React from 'react';
-import { Loader2, Edit2, Upload, ArrowRight } from 'lucide-react';
+import { Loader2, Edit2, Upload, ArrowRight, Sparkles, Wand2 } from 'lucide-react';
 import { Keyframe } from '../../types';
 
 interface KeyframeEditorProps {
   startKeyframe?: Keyframe;
   endKeyframe?: Keyframe;
   canCopyPrevious: boolean;
+  isAIOptimizing?: boolean;
   onGenerateKeyframe: (type: 'start' | 'end') => void;
   onUploadKeyframe: (type: 'start' | 'end') => void;
   onEditPrompt: (type: 'start' | 'end', prompt: string) => void;
+  onOptimizeWithAI: (type: 'start' | 'end') => void;
+  onOptimizeBothWithAI: () => void;
   onCopyPrevious: () => void;
   onImageClick: (url: string, title: string) => void;
 }
@@ -17,16 +20,19 @@ const KeyframeEditor: React.FC<KeyframeEditorProps> = ({
   startKeyframe,
   endKeyframe,
   canCopyPrevious,
+  isAIOptimizing = false,
   onGenerateKeyframe,
   onUploadKeyframe,
   onEditPrompt,
+  onOptimizeWithAI,
+  onOptimizeBothWithAI,
   onCopyPrevious,
   onImageClick
 }) => {
   const renderKeyframePanel = (
     type: 'start' | 'end',
-    keyframe?: Keyframe,
-    label: string
+    label: string,
+    keyframe?: Keyframe
   ) => {
     const isGenerating = keyframe?.status === 'generating';
     const hasFailed = keyframe?.status === 'failed';
@@ -37,15 +43,29 @@ const KeyframeEditor: React.FC<KeyframeEditorProps> = ({
           <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
             {label}
           </label>
-          {keyframe?.visualPrompt && (
+          <div className="flex items-center gap-1">
             <button
-              onClick={() => onEditPrompt(type, keyframe.visualPrompt!)}
-              className="p-1 text-yellow-400 hover:text-white transition-colors"
-              title="编辑提示词"
+              onClick={() => onOptimizeWithAI(type)}
+              disabled={isAIOptimizing}
+              className="p-1 text-indigo-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="AI优化提示词"
             >
-              <Edit2 className="w-3 h-3" />
+              {isAIOptimizing ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Sparkles className="w-3 h-3" />
+              )}
             </button>
-          )}
+            {keyframe?.visualPrompt && (
+              <button
+                onClick={() => onEditPrompt(type, keyframe.visualPrompt!)}
+                className="p-1 text-yellow-400 hover:text-white transition-colors"
+                title="编辑提示词"
+              >
+                <Edit2 className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </div>
         
         <div className="aspect-video bg-black rounded-lg border border-zinc-800 overflow-hidden relative group">
@@ -124,14 +144,33 @@ const KeyframeEditor: React.FC<KeyframeEditorProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
-        <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+        <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex-1">
           视觉制作 (Visual Production)
         </span>
+        {/* 一次性优化两帧按钮 */}
+        <button
+          onClick={onOptimizeBothWithAI}
+          disabled={isAIOptimizing}
+          className="px-3 py-1.5 bg-white hover:bg-zinc-200 text-black rounded text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          title="AI一次性优化起始帧和结束帧（推荐）"
+        >
+          {isAIOptimizing ? (
+            <>
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>优化中...</span>
+            </>
+          ) : (
+            <>
+              <Wand2 className="w-3 h-3" />
+              <span>AI优化两帧</span>
+            </>
+          )}
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {renderKeyframePanel('start', startKeyframe, '起始帧')}
-        {renderKeyframePanel('end', endKeyframe, '结束帧')}
+        {renderKeyframePanel('start', '起始帧', startKeyframe)}
+        {renderKeyframePanel('end', '结束帧', endKeyframe)}
       </div>
     </div>
   );

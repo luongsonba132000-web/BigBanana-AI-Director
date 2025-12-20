@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutGrid, Sparkles, Loader2, AlertCircle, Edit2, Film, Video as VideoIcon } from 'lucide-react';
 import { ProjectState, Shot, Keyframe } from '../../types';
-import { generateImage, generateVideo, generateActionSuggestion } from '../../services/geminiService';
+import { generateImage, generateVideo, generateActionSuggestion, optimizeKeyframePrompt, optimizeBothKeyframes } from '../../services/geminiService';
 import { 
   getRefImagesForShot, 
   buildKeyframePrompt, 
@@ -385,6 +385,139 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
     }
   };
 
+  /**
+   * AI优化关键帧提示词（单个）
+   */
+  const handleOptimizeKeyframeWithAI = async (type: 'start' | 'end') => {
+    if (!activeShot) return;
+    
+    const scene = project.scriptData?.scenes.find(s => String(s.id) === String(activeShot.sceneId));
+    if (!scene) {
+      showAlert('找不到场景信息', { type: 'warning' });
+      return;
+    }
+    
+    setIsAIGenerating(true);
+    
+    try {
+      // 获取角色信息
+      const characterNames: string[] = [];
+      if (activeShot.characters && project.scriptData?.characters) {
+        activeShot.characters.forEach(charId => {
+          const char = project.scriptData?.characters.find(c => String(c.id) === String(charId));
+          if (char) characterNames.push(char.name);
+        });
+      }
+      
+      const visualStyle = project.visualStyle || project.scriptData?.visualStyle || 'live-action';
+      const actionSummary = activeShot.actionSummary || '未定义的动作';
+      const cameraMovement = activeShot.cameraMovement || '平移';
+      
+      const optimizedPrompt = await optimizeKeyframePrompt(
+        type,
+        actionSummary,
+        cameraMovement,
+        {
+          location: scene.location,
+          time: scene.time,
+          atmosphere: scene.atmosphere
+        },
+        characterNames,
+        visualStyle
+      );
+      
+      // 更新关键帧的visualPrompt
+      const existingKf = activeShot.keyframes?.find(k => k.type === type);
+      const kfId = existingKf?.id || generateId(`kf-${activeShot.id}-${type}`);
+      
+      updateShot(activeShot.id, (s) => {
+        return updateKeyframeInShot(
+          s,
+          type,
+          createKeyframe(kfId, type, optimizedPrompt, existingKf?.imageUrl, existingKf?.status || 'pending')
+        );
+      });
+      
+      showAlert(`${type === 'start' ? '起始帧' : '结束帧'}提示词已优化`, { type: 'success' });
+    } catch (e: any) {
+      console.error('AI优化失败:', e);
+      if (onApiKeyError && onApiKeyError(e)) return;
+      showAlert(`AI优化失败: ${e.message}`, { type: 'error' });
+    } finally {
+      setIsAIGenerating(false);
+    }
+  };
+
+  /**
+   * AI一次性优化起始帧和结束帧（推荐）
+   */
+  const handleOptimizeBothKeyframes = async () => {
+    if (!activeShot) return;
+    
+    const scene = project.scriptData?.scenes.find(s => String(s.id) === String(activeShot.sceneId));
+    if (!scene) {
+      showAlert('找不到场景信息', { type: 'warning' });
+      return;
+    }
+    
+    setIsAIGenerating(true);
+    
+    try {
+      // 获取角色信息
+      const characterNames: string[] = [];
+      if (activeShot.characters && project.scriptData?.characters) {
+        activeShot.characters.forEach(charId => {
+          const char = project.scriptData?.characters.find(c => String(c.id) === String(charId));
+          if (char) characterNames.push(char.name);
+        });
+      }
+      
+      const visualStyle = project.visualStyle || project.scriptData?.visualStyle || 'live-action';
+      const actionSummary = activeShot.actionSummary || '未定义的动作';
+      const cameraMovement = activeShot.cameraMovement || '平移';
+      
+      const result = await optimizeBothKeyframes(
+        actionSummary,
+        cameraMovement,
+        {
+          location: scene.location,
+          time: scene.time,
+          atmosphere: scene.atmosphere
+        },
+        characterNames,
+        visualStyle
+      );
+      
+      // 同时更新起始帧和结束帧
+      const startKf = activeShot.keyframes?.find(k => k.type === 'start');
+      const endKf = activeShot.keyframes?.find(k => k.type === 'end');
+      const startKfId = startKf?.id || generateId(`kf-${activeShot.id}-start`);
+      const endKfId = endKf?.id || generateId(`kf-${activeShot.id}-end`);
+      
+      updateShot(activeShot.id, (s) => {
+        let updated = updateKeyframeInShot(
+          s,
+          'start',
+          createKeyframe(startKfId, 'start', result.startPrompt, startKf?.imageUrl, startKf?.status || 'pending')
+        );
+        updated = updateKeyframeInShot(
+          updated,
+          'end',
+          createKeyframe(endKfId, 'end', result.endPrompt, endKf?.imageUrl, endKf?.status || 'pending')
+        );
+        return updated;
+      });
+      
+      showAlert('起始帧和结束帧提示词已优化', { type: 'success' });
+    } catch (e: any) {
+      console.error('AI优化失败:', e);
+      if (onApiKeyError && onApiKeyError(e)) return;
+      showAlert(`AI优化失败: ${e.message}`, { type: 'error' });
+    } finally {
+      setIsAIGenerating(false);
+    }
+  };
+
   // 空状态
   if (!project.shots.length) {
     return (
@@ -470,10 +603,12 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
             shotIndex={activeShotIndex}
             totalShots={project.shots.length}
             scriptData={project.scriptData}
+            isAIOptimizing={isAIGenerating}
             onClose={() => setActiveShotId(null)}
             onPrevious={() => setActiveShotId(project.shots[activeShotIndex - 1].id)}
             onNext={() => setActiveShotId(project.shots[activeShotIndex + 1].id)}
             onEditActionSummary={() => setEditModal({ type: 'action', value: activeShot.actionSummary })}
+            onGenerateAIAction={handleGenerateAIAction}
             onAddCharacter={(charId) => updateShot(activeShot.id, s => ({ ...s, characters: [...s.characters, charId] }))}
             onRemoveCharacter={(charId) => updateShot(activeShot.id, s => ({
               ...s,
@@ -490,6 +625,8 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
             onGenerateKeyframe={(type) => handleGenerateKeyframe(activeShot, type)}
             onUploadKeyframe={(type) => handleUploadKeyframeImage(activeShot, type)}
             onEditKeyframePrompt={(type, prompt) => setEditModal({ type: 'keyframe', value: prompt, frameType: type })}
+            onOptimizeKeyframeWithAI={(type) => handleOptimizeKeyframeWithAI(type)}
+            onOptimizeBothKeyframes={handleOptimizeBothKeyframes}
             onCopyPreviousEndFrame={handleCopyPreviousEndFrame}
             onGenerateVideo={() => handleGenerateVideo(activeShot)}
             onModelChange={(model) => updateShot(activeShot.id, s => ({ ...s, videoModel: model }))}
