@@ -1,0 +1,166 @@
+import { Shot, ProjectState, Keyframe } from '../../types';
+import { VISUAL_STYLE_PROMPTS, VIDEO_PROMPT_TEMPLATES } from './constants';
+import { getCameraMovementCompositionGuide } from './cameraMovementGuides';
+
+/**
+ * 获取镜头的参考图片
+ */
+export const getRefImagesForShot = (shot: Shot, scriptData: ProjectState['scriptData']): string[] => {
+  const referenceImages: string[] = [];
+  
+  if (!scriptData) return referenceImages;
+  
+  // 1. 场景参考图（环境/氛围） - 优先级最高
+  const scene = scriptData.scenes.find(s => String(s.id) === String(shot.sceneId));
+  if (scene?.referenceImage) {
+    referenceImages.push(scene.referenceImage);
+  }
+
+  // 2. 角色参考图（外观）
+  if (shot.characters) {
+    shot.characters.forEach(charId => {
+      const char = scriptData.characters.find(c => String(c.id) === String(charId));
+      if (!char) return;
+
+      // 检查是否为此镜头选择了特定变体
+      const varId = shot.characterVariations?.[charId];
+      if (varId) {
+        const variation = char.variations?.find(v => v.id === varId);
+        if (variation?.referenceImage) {
+          referenceImages.push(variation.referenceImage);
+          return; // 使用变体图片而不是基础图片
+        }
+      }
+
+      // 回退到基础图片
+      if (char.referenceImage) {
+        referenceImages.push(char.referenceImage);
+      }
+    });
+  }
+  
+  return referenceImages;
+};
+
+/**
+ * 构建关键帧提示词
+ */
+export const buildKeyframePrompt = (
+  basePrompt: string,
+  visualStyle: string,
+  cameraMovement: string,
+  frameType: 'start' | 'end'
+): string => {
+  const stylePrompt = VISUAL_STYLE_PROMPTS[visualStyle] || visualStyle;
+  const cameraGuide = getCameraMovementCompositionGuide(cameraMovement, frameType);
+  
+  return `${basePrompt}\n\nVisual Style: ${stylePrompt}\n\nCamera Movement: ${cameraMovement} (${frameType === 'start' ? 'Initial' : 'Final'} frame)\n${cameraGuide}\n\nVisual Requirements: High definition, cinematic composition, 16:9 widescreen format. Focus on lighting hierarchy, color saturation, and depth of field effects. Ensure the subject is clear and the background transitions naturally.`;
+};
+
+/**
+ * 构建视频生成提示词
+ */
+export const buildVideoPrompt = (
+  actionSummary: string,
+  cameraMovement: string,
+  videoModel: 'sora-2' | 'veo_3_1_i2v_s_fast_fl_landscape',
+  language: string
+): string => {
+  const isChinese = language === '中文' || language === 'Chinese';
+  
+  if (videoModel === 'sora-2') {
+    const template = isChinese 
+      ? VIDEO_PROMPT_TEMPLATES.sora2.chinese 
+      : VIDEO_PROMPT_TEMPLATES.sora2.english;
+    
+    return template
+      .replace('{actionSummary}', actionSummary)
+      .replace('{cameraMovement}', cameraMovement)
+      .replace('{language}', language);
+  } else {
+    return VIDEO_PROMPT_TEMPLATES.veo.simple
+      .replace('{actionSummary}', actionSummary)
+      .replace('{cameraMovement}', cameraMovement)
+      .replace('{language}', isChinese ? '中文' : language);
+  }
+};
+
+/**
+ * 从现有提示词中提取基础部分（移除追加的样式信息）
+ */
+export const extractBasePrompt = (fullPrompt: string, fallback: string): string => {
+  const visualStyleIndex = fullPrompt.indexOf('\n\nVisual Style:');
+  if (visualStyleIndex > 0) {
+    return fullPrompt.substring(0, visualStyleIndex);
+  }
+  return fullPrompt || fallback;
+};
+
+/**
+ * 生成唯一ID
+ */
+export const generateId = (prefix: string): string => {
+  return `${prefix}-${Date.now()}`;
+};
+
+/**
+ * 延迟执行
+ */
+export const delay = (ms: number): Promise<void> => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+/**
+ * 图片文件转base64
+ */
+export const convertImageToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      resolve(event.target?.result as string);
+    };
+    reader.onerror = () => {
+      reject(new Error('读取文件失败'));
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
+/**
+ * 创建关键帧对象
+ */
+export const createKeyframe = (
+  id: string,
+  type: 'start' | 'end',
+  visualPrompt: string,
+  imageUrl?: string,
+  status: 'pending' | 'generating' | 'completed' | 'failed' = 'pending'
+): Keyframe => {
+  return {
+    id,
+    type,
+    visualPrompt,
+    imageUrl,
+    status
+  };
+};
+
+/**
+ * 更新镜头中的关键帧
+ */
+export const updateKeyframeInShot = (
+  shot: Shot,
+  type: 'start' | 'end',
+  keyframe: Keyframe
+): Shot => {
+  const newKeyframes = [...(shot.keyframes || [])];
+  const idx = newKeyframes.findIndex(k => k.type === type);
+  
+  if (idx >= 0) {
+    newKeyframes[idx] = keyframe;
+  } else {
+    newKeyframes.push(keyframe);
+  }
+  
+  return { ...shot, keyframes: newKeyframes };
+};

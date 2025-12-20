@@ -1,0 +1,128 @@
+import React from 'react';
+import { MapPin, User, Clock, X, Shirt } from 'lucide-react';
+import { Shot, Character, Scene } from '../../types';
+
+interface SceneContextProps {
+  shot: Shot;
+  scene?: Scene;
+  characters: Character[];
+  availableCharacters: Character[];
+  onAddCharacter: (charId: string) => void;
+  onRemoveCharacter: (charId: string) => void;
+  onVariationChange: (charId: string, varId: string) => void;
+}
+
+const SceneContext: React.FC<SceneContextProps> = ({
+  shot,
+  scene,
+  characters,
+  availableCharacters,
+  onAddCharacter,
+  onRemoveCharacter,
+  onVariationChange
+}) => {
+  return (
+    <div className="bg-[#141414] p-5 rounded-xl border border-zinc-800 mb-6 space-y-4">
+      <div className="flex items-center gap-2 mb-2">
+        <MapPin className="w-4 h-4 text-zinc-500" />
+        <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+          场景环境 (Scene Context)
+        </h4>
+      </div>
+      
+      <div className="flex gap-4">
+        <div className="w-28 h-20 bg-zinc-900 rounded-lg overflow-hidden flex-shrink-0 border border-zinc-700 relative">
+          {scene?.referenceImage ? (
+            <img src={scene.referenceImage} className="w-full h-full object-cover" alt={scene.location} />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-zinc-800">
+              <MapPin className="w-6 h-6 text-zinc-700" />
+            </div>
+          )}
+        </div>
+        
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-white text-sm font-bold">{scene?.location || '未知场景'}</span>
+            <span className="text-sm px-2 py-0.5 bg-zinc-800 text-zinc-400 rounded-full flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {scene?.time}
+            </span>
+          </div>
+          <p className="text-xs text-zinc-500 line-clamp-2">{scene?.atmosphere}</p>
+          
+          {/* Character List */}
+          <div className="flex flex-col gap-2 pt-2">
+            {characters.map(char => {
+              const hasVars = char.variations && char.variations.length > 0;
+              const selectedVarId = shot.characterVariations?.[char.id];
+              
+              return (
+                <div 
+                  key={char.id} 
+                  className="flex items-center justify-between bg-zinc-900 rounded p-1.5 border border-zinc-800 group"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-zinc-700 overflow-hidden flex-shrink-0">
+                      {char.referenceImage && (
+                        <img src={char.referenceImage} className="w-full h-full object-cover" alt={char.name} />
+                      )}
+                    </div>
+                    <span className="text-[11px] text-zinc-300 font-medium">{char.name}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-1">
+                    {hasVars && (
+                      <select
+                        value={selectedVarId || ''}
+                        onChange={(e) => onVariationChange(char.id, e.target.value)}
+                        className="text-[10px] bg-zinc-800 text-zinc-400 border border-zinc-700 rounded px-1.5 py-0.5 outline-none"
+                      >
+                        <option value="">基础造型</option>
+                        {char.variations!.map(v => (
+                          <option key={v.id} value={v.id}>
+                            <Shirt className="w-2 h-2 inline mr-1" />
+                            {v.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <button
+                      onClick={() => onRemoveCharacter(char.id)}
+                      className="p-1 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors opacity-0 group-hover:opacity-100"
+                      title="移除角色"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+            
+            {/* Add Character Selector */}
+            {availableCharacters.length > 0 && (
+              <div className="flex items-center gap-2 pt-1">
+                <select 
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      onAddCharacter(e.target.value);
+                      e.target.value = "";
+                    }
+                  }}
+                  className="flex-1 bg-zinc-900 text-[11px] text-zinc-400 border border-zinc-700 rounded px-2 py-1.5 outline-none focus:border-indigo-500 hover:border-zinc-600 transition-colors"
+                >
+                  <option value="">+ 添加角色到此镜头</option>
+                  {availableCharacters.map(char => (
+                    <option key={char.id} value={char.id}>{char.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SceneContext;
