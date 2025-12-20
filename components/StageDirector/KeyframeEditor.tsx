@@ -92,7 +92,7 @@ const KeyframeEditor: React.FC<KeyframeEditorProps> = ({
               <button
                 onClick={() => onGenerateKeyframe(type)}
                 disabled={isGenerating}
-                className="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1 disabled:opacity-50"
+                className="flex-1 py-1.5 bg-white hover:bg-zinc-200 text-black rounded text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1 disabled:opacity-50"
               >
                 {keyframe?.imageUrl ? '重新生成' : '生成'}
               </button>

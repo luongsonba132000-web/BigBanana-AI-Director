@@ -69,8 +69,8 @@ const EditModal: React.FC<EditModalProps> = ({
               disabled={isAIGenerating}
               className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
                 isAIGenerating
-                  ? 'bg-indigo-600/50 text-white cursor-not-allowed'
-                  : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/20'
+                  ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
+                  : 'bg-white text-black hover:bg-zinc-200 shadow-lg'
               }`}
             >
               {isAIGenerating ? (
@@ -91,7 +91,7 @@ const EditModal: React.FC<EditModalProps> = ({
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full h-64 bg-black text-white border border-zinc-700 rounded-lg p-4 text-sm outline-none focus:border-indigo-500 transition-colors resize-none ${textareaClassName}`}
+          className={`w-full h-64 bg-black text-white border border-zinc-700 rounded-lg p-4 text-sm outline-none focus:border-zinc-500 transition-colors resize-none ${textareaClassName}`}
           placeholder={placeholder}
           autoFocus
           disabled={isAIGenerating}
@@ -108,7 +108,7 @@ const EditModal: React.FC<EditModalProps> = ({
           <button
             onClick={onSave}
             disabled={isAIGenerating}
-            className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-500 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-white text-black hover:bg-zinc-200 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Check className="w-4 h-4" />
             保存
