@@ -46,6 +46,11 @@ Traditional Text-to-Video models often struggle with specific camera movements a
 *   **Intelligent Breakdown**: Input a novel or story outline, and the AI automatically breaks it down into a standard script structure (Scenes, Time, Atmosphere).
 *   **Visual Translation**: Automatically converts text descriptions into professional visual prompts.
 *   **Pacing Control**: Set target durations (e.g., 30s Teaser, 3min Short), and the AI plans shot density accordingly.
+*   **✨ Manual Editing (NEW)**:
+    *   Edit character visual descriptions and shot prompts
+    *   Edit character list for each shot (add/remove characters)
+    *   Edit action descriptions and dialogues for each shot
+    *   Ensure generated results meet expectations with precise control over every detail
 
 ### Phase 02: Assets & Casting
 *   **Character Consistency**:
@@ -97,6 +102,17 @@ This project deeply integrates [**AntSK API Platform**](https://api.antsk.cn/), 
 * **Real-Time Monitoring**: Visual usage stats and cost tracking
 
 [**Sign Up for Free Credits**](https://api.antsk.cn/) →
+
+---
+
+## 💬 Join Our Community
+
+Scan the QR code to join our **BigBanana Product Experience Group** on WeChat. Connect with fellow creators, share tips, and get the latest updates:
+
+<div align="center">
+<img src="./images/wechat-qr.png" width="300" alt="WeChat Group QR Code">
+<p><i>Scan to join WeChat group</i></p>
+</div>
 
 ---
 
