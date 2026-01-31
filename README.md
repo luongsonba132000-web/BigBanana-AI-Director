@@ -7,11 +7,33 @@
 [![English](https://img.shields.io/badge/Language-English-gray.svg)](./README_EN.md)
 [![日本語](https://img.shields.io/badge/Language-日本語-gray.svg)](./README_JA.md)
 
-**BigBanana AI Director** 是一个 **AI 一站式短剧/漫剧平台**，面向创作者，实现从灵感到成片的高效生产。
+**BigBanana AI Director** 是一个 **AI 一站式短剧/漫剧平台**，面向创作者,实现从灵感到成片的高效生产。
 
-它摇弃了传统的“抽卡式”生成，采用 **"Script-to-Asset-to-Keyframe"** 的工业化工作流。通过深度集成 antsk API 的先进 AI 模型，实现 **“一句话生成完整短剧，从剧本到成片全自动化”**，同时精准控制角色一致性、场景连续性与镜头运动。
+它摇弃了传统的"抽卡式"生成，采用 **"Script-to-Asset-to-Keyframe"** 的工业化工作流。通过深度集成 antsk API 的先进 AI 模型，实现 **"一句话生成完整短剧，从剧本到成片全自动化"**，同时精准控制角色一致性、场景连续性与镜头运动。
 
-![UI Preview](./UI.png)
+## 界面展示
+
+### 项目管理
+![项目管理](./images/项目管理.png)
+
+### Phase 01: 剧本与分镜
+![剧本创作](./images/剧本创作.png)
+![剧本与故事](./images/剧本与故事.png)
+
+### Phase 02: 角色与场景资产
+![角色场景](./images/角色场景.png)
+![场景](./images/场景.png)
+
+### Phase 03: 导演工作台
+![导演工作台](./images/导演工作台.png)
+![镜头与帧](./images/镜头与帧.png)
+![镜头与帧1](./images/镜头与帧1.png)
+
+### Phase 04: 成片导出
+![成片导出](./images/成片导出.png)
+
+### 提示词管理
+![提示词管理](./images/提示词管理.png)
 
 ## 核心理念：关键帧驱动 (Keyframe-Driven)
 

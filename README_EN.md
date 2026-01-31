@@ -9,7 +9,29 @@
 **BigBanana AI Director** is an **AI-powered, one-stop platform** for **short dramas** and **motion comics**, built for creators who want to go from idea to final video fast.
 
 Moving away from the traditional "slot machine" style of random generation, BigBanana adopts an industrial **"Script-to-Asset-to-Keyframe"** workflow. With deep integration of antsk API’s advanced AI models, it enables **one-sentence to complete drama** — fully automated from **script** to **final video**, while maintaining precise control over character consistency, scene continuity, and camera movement.
+## UI Showcase
 
+### Project Management
+![Project Management](./images/项目管理.png)
+
+### Phase 01: Script & Storyboard
+![Script Creation](./images/剧本创作.png)
+![Script & Story](./images/剧本与故事.png)
+
+### Phase 02: Character & Scene Assets
+![Character & Scene](./images/角色场景.png)
+![Scenes](./images/场景.png)
+
+### Phase 03: Director Workbench
+![Director Workbench](./images/导演工作台.png)
+![Shots & Frames](./images/镜头与帧.png)
+![Shots & Frames Detail](./images/镜头与帧1.png)
+
+### Phase 04: Export
+![Export](./images/成片导出.png)
+
+### Prompt Management
+![Prompt Management](./images/提示词管理.png)
 ## Core Philosophy: Keyframe-Driven
 
 Traditional Text-to-Video models often struggle with specific camera movements and precise start/end states. BigBanana introduces the animation concept of **Keyframes**:
