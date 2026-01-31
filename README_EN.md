@@ -1,14 +1,14 @@
 # BigBanana AI Director
 
-> **Industrial AI Motion Comic & Video Workbench**
+> **AI-Powered End-to-End Short Drama & Motion Comic Platform**
 
 [![中文](https://img.shields.io/badge/Language-中文-gray.svg)](./README.md)
 [![English](https://img.shields.io/badge/Language-English-blue.svg)](./README_EN.md)
 [![日本語](https://img.shields.io/badge/Language-日本語-gray.svg)](./README_JA.md)
 
-**BigBanana AI Director** is a professional productivity tool designed for **AI Motion Comics**, **Webtoons**, and **Video Animatics**.
+**BigBanana AI Director** is an **AI-powered, one-stop platform** for **short dramas** and **motion comics**, built for creators who want to go from idea to final video fast.
 
-Moving away from the traditional "slot machine" style of random generation, BigBanana adopts an industrial **"Script-to-Asset-to-Keyframe"** workflow. By deeply integrating antsk API's advanced AI models, it achieves precise control over character consistency, scene continuity, and camera movement.
+Moving away from the traditional "slot machine" style of random generation, BigBanana adopts an industrial **"Script-to-Asset-to-Keyframe"** workflow. With deep integration of antsk API’s advanced AI models, it enables **one-sentence to complete drama** — fully automated from **script** to **final video**, while maintaining precise control over character consistency, scene continuity, and camera movement.
 
 ## Core Philosophy: Keyframe-Driven
 
@@ -53,6 +53,28 @@ Traditional Text-to-Video models often struggle with specific camera movements a
     *   **Video**: `veo_3_1_i2v_s_fast_fl_landscape` / `sora-2`
     *   **Video**: `veo-3.1-fast-generate-preview`
 *   **Storage**: IndexedDB (Local browser database, privacy-focused, no backend dependency)
+
+## Why Choose antsk API?
+
+This project deeply integrates [**antsk API Platform**](https://api.antsk.cn/), delivering exceptional value for creators:
+
+### 🎯 Full Model Coverage
+* **Text Models**: GPT-4o, GPT-5.1, Claude 3.5 Sonnet
+* **Vision Models**: Gemini 3 Pro, Nano Banana Pro
+* **Video Models**: Sora 2, Veo 3.1 (with keyframe interpolation)
+* **Unified Access**: Single API for all models, no platform switching
+
+### 💰 Unbeatable Pricing
+* **Under 20% of Official Prices**: Save 80%+ on all models
+* **Pay-As-You-Go**: No minimum spend, pay only for what you use
+* **Enterprise-Grade Reliability**: 99.9% SLA, 24/7 technical support
+
+### 🚀 Developer-Friendly
+* **OpenAI-Compatible**: Zero migration cost for existing code
+* **Comprehensive Docs**: Full API documentation and code examples
+* **Real-Time Monitoring**: Visual usage stats and cost tracking
+
+[**Sign Up for Free Credits**](https://api.antsk.cn/) →
 
 ## Quick Start
 

@@ -1,15 +1,15 @@
 # BigBanana AI Director (AI 漫剧工场)
 
-> **工业级 AI 漫剧与视频生成工作台**
+> **AI 一站式短剧/漫剧生成平台**
 > *Industrial AI Motion Comic & Video Workbench*
 
 [![中文](https://img.shields.io/badge/Language-中文-blue.svg)](./README.md)
 [![English](https://img.shields.io/badge/Language-English-gray.svg)](./README_EN.md)
 [![日本語](https://img.shields.io/badge/Language-日本語-gray.svg)](./README_JA.md)
 
-**BigBanana AI Director** 是一个专为 **AI 漫剧 (Motion Comics)**、**动态漫画**及**影视分镜 (Animatic)** 设计的专业生产力工具。
+**BigBanana AI Director** 是一个 **AI 一站式短剧/漫剧平台**，面向创作者，实现从灵感到成片的高效生产。
 
-它摇弃了传统的“抽卡式”生成，采用 **"Script-to-Asset-to-Keyframe"** 的工业化工作流。通过深度集成 antsk API 的先进 AI 模型，实现了对角色一致性、场景连续性以及镜头运动的精准控制。
+它摇弃了传统的“抽卡式”生成，采用 **"Script-to-Asset-to-Keyframe"** 的工业化工作流。通过深度集成 antsk API 的先进 AI 模型，实现 **“一句话生成完整短剧，从剧本到成片全自动化”**，同时精准控制角色一致性、场景连续性与镜头运动。
 
 ![UI Preview](./UI.png)
 
@@ -63,6 +63,28 @@
     *   **Vision**: `gemini-3-pro-image-preview` (高速绘图)
     *   **Video**: `veo_3_1_i2v_s_fast_fl_landscape` / `sora-2` (首尾帧视频插值)
 *   **Storage**: IndexedDB (本地浏览器数据库，数据隐私安全，无后端依赖)
+
+## 为什么选择 antsk API？
+
+本项目深度集成 [**antsk API 平台**](https://api.antsk.cn/)，为创作者提供极致性价比的 AI 能力：
+
+### 🎯 全模型覆盖
+* **文本模型**: GPT-4o、GPT-5.1、Claude 3.5 Sonnet
+* **视觉模型**: Gemini 3 Pro、Nano Banana Pro
+* **视频模型**: Sora 2、Veo 3.1 (支持关键帧插值)
+* **一站式调用**：统一 API 接口，无需多平台切换
+
+### 💰 超值定价
+* **官方 2 折以下**：所有模型价格均低于官方渠道 80%
+* **按需计费**：无最低消费，用多少付多少
+* **企业级稳定性**：99.9% SLA 保障，7x24 技术支持
+
+### 🚀 开发者友好
+* **OpenAI 兼容协议**：零代码迁移成本
+* **详细文档**：完整的 API 文档和示例代码
+* **实时监控**：可视化用量统计和费用追踪
+
+[**立即注册领取免费额度**](https://api.antsk.cn/) →
 
 ## 快速开始
 
