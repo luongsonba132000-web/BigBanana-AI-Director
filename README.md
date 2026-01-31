@@ -136,6 +136,84 @@
 **适合场景**：日常创作、快速原型、灵感验证  
 **本项目更适合**：系统化短剧制作、批量视频生产、工业化工作流
 
+## 项目启动
+
+### 方式一：本地开发
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/shuyu-labs/BigBanana-AI-Director.git
+cd BigBanana-AI-Director
+
+# 2. 安装依赖
+npm install
+
+# 3. 启动开发服务器
+npm run dev
+
+# 4. 访问应用
+# 浏览器打开 http://localhost:3000
+```
+
+### 方式二：Docker 部署（推荐）
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/shuyu-labs/BigBanana-AI-Director.git
+cd BigBanana-AI-Director
+
+# 2. 使用 Docker Compose 构建并启动
+docker-compose up -d --build
+
+# 3. 访问应用
+# 浏览器打开 http://localhost:3005
+
+# 查看日志
+docker-compose logs -f
+
+# 停止容器
+docker-compose down
+```
+
+### 方式三：使用 Docker 命令
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/shuyu-labs/BigBanana-AI-Director.git
+cd BigBanana-AI-Director
+
+# 2. 构建镜像
+docker build -t bigbanana-ai .
+
+# 3. 运行容器
+docker run -d -p 3005:80 --name bigbanana-ai-app bigbanana-ai
+
+# 4. 访问应用
+# 浏览器打开 http://localhost:3005
+
+# 查看日志
+docker logs -f bigbanana-ai-app
+
+# 停止容器
+docker stop bigbanana-ai-app
+```
+
+### 其他命令
+
+```bash
+# 构建生产版本
+npm run build
+
+# 预览生产版本
+npm run preview
+
+# 强制无缓存重新构建 Docker 镜像
+docker-compose build --no-cache
+docker-compose up -d --force-recreate
+```
+
+---
+
 ## 快速开始
 
 1.  **配置密钥**: 启动应用，输入 AntSK API Key。[**立即购买**](https://api.antsk.cn)

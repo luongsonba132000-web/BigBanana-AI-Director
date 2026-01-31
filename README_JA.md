@@ -134,6 +134,84 @@ QRコードをスキャンして **BigBanana プロダクト体験グループ**
 **最適な用途**：日常的な創作、高速プロトタイピング、アイデア検証  
 **本プロジェクトの用途**：体系的なドラマ制作、バッチ動画生成、産業用ワークフロー
 
+## プロジェクトの起動
+
+### 方法 1：ローカル開発
+
+```bash
+# 1. リポジトリをクローン
+git clone https://github.com/shuyu-labs/BigBanana-AI-Director.git
+cd BigBanana-AI-Director
+
+# 2. 依存関係をインストール
+npm install
+
+# 3. 開発サーバーを起動
+npm run dev
+
+# 4. ブラウザでアクセス
+# http://localhost:3000 を開く
+```
+
+### 方法 2：Docker デプロイ（推奨）
+
+```bash
+# 1. リポジトリをクローン
+git clone https://github.com/shuyu-labs/BigBanana-AI-Director.git
+cd BigBanana-AI-Director
+
+# 2. Docker Compose でビルドして起動
+docker-compose up -d --build
+
+# 3. ブラウザでアクセス
+# http://localhost:3005 を開く
+
+# ログを確認
+docker-compose logs -f
+
+# コンテナを停止
+docker-compose down
+```
+
+### 方法 3：Docker コマンドを使用
+
+```bash
+# 1. リポジトリをクローン
+git clone https://github.com/shuyu-labs/BigBanana-AI-Director.git
+cd BigBanana-AI-Director
+
+# 2. イメージをビルド
+docker build -t bigbanana-ai .
+
+# 3. コンテナを起動
+docker run -d -p 3005:80 --name bigbanana-ai-app bigbanana-ai
+
+# 4. ブラウザでアクセス
+# http://localhost:3005 を開く
+
+# ログを確認
+docker logs -f bigbanana-ai-app
+
+# コンテナを停止
+docker stop bigbanana-ai-app
+```
+
+### その他のコマンド
+
+```bash
+# 本番用ビルド
+npm run build
+
+# 本番ビルドのプレビュー
+npm run preview
+
+# キャッシュなしで Docker イメージを強制再ビルド
+docker-compose build --no-cache
+docker-compose up -d --force-recreate
+```
+
+---
+
 ## クイックスタート
 
 1.  **キーの設定**: アプリを起動し、AntSK API Key を入力します。[**API Key を購入**](https://api.antsk.cn)

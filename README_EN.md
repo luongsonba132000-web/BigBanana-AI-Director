@@ -131,6 +131,84 @@ For **quick one-off creative tasks**, try our online tool platform:
 **Best For**: Daily creation, rapid prototyping, idea validation  
 **This Project Is For**: Systematic drama production, batch video generation, industrial workflows
 
+## Getting Started
+
+### Option 1: Local Development
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/shuyu-labs/BigBanana-AI-Director.git
+cd BigBanana-AI-Director
+
+# 2. Install dependencies
+npm install
+
+# 3. Start development server
+npm run dev
+
+# 4. Open in browser
+# Visit http://localhost:3000
+```
+
+### Option 2: Docker Deployment (Recommended)
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/shuyu-labs/BigBanana-AI-Director.git
+cd BigBanana-AI-Director
+
+# 2. Build and start with Docker Compose
+docker-compose up -d --build
+
+# 3. Open in browser
+# Visit http://localhost:3005
+
+# View logs
+docker-compose logs -f
+
+# Stop container
+docker-compose down
+```
+
+### Option 3: Using Docker Commands
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/shuyu-labs/BigBanana-AI-Director.git
+cd BigBanana-AI-Director
+
+# 2. Build image
+docker build -t bigbanana-ai .
+
+# 3. Run container
+docker run -d -p 3005:80 --name bigbanana-ai-app bigbanana-ai
+
+# 4. Open in browser
+# Visit http://localhost:3005
+
+# View logs
+docker logs -f bigbanana-ai-app
+
+# Stop container
+docker stop bigbanana-ai-app
+```
+
+### Other Commands
+
+```bash
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Force rebuild Docker image without cache
+docker-compose build --no-cache
+docker-compose up -d --force-recreate
+```
+
+---
+
 ## Quick Start
 
 1.  **Configure Key**: Launch the app and input your AntSK API Key. [**Buy API Key**](https://api.antsk.cn)
