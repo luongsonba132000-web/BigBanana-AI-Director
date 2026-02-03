@@ -4,12 +4,9 @@
  */
 
 import React, { useState } from 'react';
-import { Check, ChevronDown, ChevronUp, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { 
   ModelDefinition, 
-  ChatModelDefinition, 
-  ImageModelDefinition, 
-  VideoModelDefinition,
   ChatModelParams,
   ImageModelParams,
   VideoModelParams,
@@ -19,9 +16,7 @@ import {
 
 interface ModelCardProps {
   model: ModelDefinition;
-  isActive: boolean;
   isExpanded: boolean;
-  onSetActive: () => void;
   onToggleExpand: () => void;
   onUpdate: (updates: Partial<ModelDefinition>) => void;
   onDelete: () => void;
@@ -29,9 +24,7 @@ interface ModelCardProps {
 
 const ModelCard: React.FC<ModelCardProps> = ({
   model,
-  isActive,
   isExpanded,
-  onSetActive,
   onToggleExpand,
   onUpdate,
   onDelete,
@@ -145,26 +138,11 @@ const ModelCard: React.FC<ModelCardProps> = ({
 
   return (
     <div 
-      className={`bg-zinc-900/50 border rounded-lg overflow-hidden transition-all ${
-        isActive ? 'border-indigo-500/50' : 'border-zinc-800'
-      } ${!model.isEnabled ? 'opacity-60' : ''}`}
+      className={`bg-zinc-900/50 border rounded-lg overflow-hidden transition-all border-zinc-800 ${!model.isEnabled ? 'opacity-60' : ''}`}
     >
       {/* 头部 */}
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-3 flex-1">
-          {/* 激活选择 */}
-          <button
-            onClick={onSetActive}
-            disabled={!model.isEnabled}
-            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-              isActive 
-                ? 'bg-indigo-500 border-indigo-500' 
-                : 'border-zinc-600 hover:border-zinc-400'
-            } ${!model.isEnabled ? 'cursor-not-allowed' : ''}`}
-          >
-            {isActive && <Check className="w-3 h-3 text-white" />}
-          </button>
-          
           {/* 模型信息 */}
           <div className="flex-1">
             <div className="flex items-center gap-2">
@@ -172,12 +150,10 @@ const ModelCard: React.FC<ModelCardProps> = ({
               {model.isBuiltIn && (
                 <span className="px-1.5 py-0.5 bg-zinc-700 text-zinc-400 text-[9px] rounded">内置</span>
               )}
-              {isActive && (
-                <span className="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-400 text-[9px] rounded">当前</span>
-              )}
             </div>
             <p className="text-[10px] text-zinc-500 mt-0.5">
               ID: {model.id}
+              {model.endpoint && ` · ${model.endpoint}`}
               {model.description && ` · ${model.description}`}
             </p>
           </div>

@@ -1,9 +1,10 @@
 /**
  * 添加模型表单组件
+ * 支持自定义提供商和 endpoint
  */
 
 import React, { useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { 
   ModelType, 
   ModelDefinition,
@@ -15,7 +16,7 @@ import {
   DEFAULT_VIDEO_PARAMS_SORA,
   DEFAULT_VIDEO_PARAMS_VEO,
 } from '../../types/model';
-import { getProviders } from '../../services/modelRegistry';
+import { getProviders, addProvider } from '../../services/modelRegistry';
 
 interface AddModelFormProps {
   type: ModelType;
@@ -24,14 +25,22 @@ interface AddModelFormProps {
 }
 
 const AddModelForm: React.FC<AddModelFormProps> = ({ type, onSave, onCancel }) => {
-  const providers = getProviders();
+  const existingProviders = getProviders();
   
   const [name, setName] = useState('');
   const [modelId, setModelId] = useState('');
   const [description, setDescription] = useState('');
-  const [providerId, setProviderId] = useState(providers[0]?.id || 'antsk');
   const [endpoint, setEndpoint] = useState('');
   const [videoMode, setVideoMode] = useState<'sync' | 'async'>('sync');
+  
+  // 提供商配置
+  const [providerMode, setProviderMode] = useState<'existing' | 'custom'>('existing');
+  const [selectedProviderId, setSelectedProviderId] = useState(existingProviders[0]?.id || 'antsk');
+  const [customProviderName, setCustomProviderName] = useState('');
+  const [customProviderBaseUrl, setCustomProviderBaseUrl] = useState('');
+  
+  // 展开高级选项
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleSave = () => {
     if (!name.trim() || !modelId.trim()) {
@@ -39,6 +48,24 @@ const AddModelForm: React.FC<AddModelFormProps> = ({ type, onSave, onCancel }) =
       return;
     }
 
+    // 处理提供商
+    let providerId = selectedProviderId;
+    
+    if (providerMode === 'custom') {
+      if (!customProviderName.trim() || !customProviderBaseUrl.trim()) {
+        alert('请填写自定义提供商名称和 API 基础 URL');
+        return;
+      }
+      // 创建新提供商
+      const newProvider = addProvider({
+        name: customProviderName.trim(),
+        baseUrl: customProviderBaseUrl.trim(),
+        isDefault: false,
+      });
+      providerId = newProvider.id;
+    }
+
+    // 根据模型类型设置默认参数
     let params: ChatModelParams | ImageModelParams | VideoModelParams;
     
     if (type === 'chat') {
@@ -61,7 +88,7 @@ const AddModelForm: React.FC<AddModelFormProps> = ({ type, onSave, onCancel }) =
       params,
     } as any;
 
-    // 使用用户输入的 ID 覆盖（在 registerModel 之前）
+    // 使用用户输入的 ID
     (model as any).id = modelId.trim();
 
     onSave(model);
@@ -71,6 +98,7 @@ const AddModelForm: React.FC<AddModelFormProps> = ({ type, onSave, onCancel }) =
     <div className="bg-zinc-900/50 border border-zinc-700 rounded-lg p-4 space-y-4">
       <h4 className="text-sm font-bold text-white">添加自定义模型</h4>
       
+      {/* 基础信息 */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="text-[10px] text-zinc-500 block mb-1">模型名称 *</label>
@@ -95,7 +123,7 @@ const AddModelForm: React.FC<AddModelFormProps> = ({ type, onSave, onCancel }) =
       </div>
 
       <div>
-        <label className="text-[10px] text-zinc-500 block mb-1">描述</label>
+        <label className="text-[10px] text-zinc-500 block mb-1">描述（可选）</label>
         <input
           type="text"
           value={description}
@@ -105,31 +133,84 @@ const AddModelForm: React.FC<AddModelFormProps> = ({ type, onSave, onCancel }) =
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="text-[10px] text-zinc-500 block mb-1">提供商</label>
-          <select
-            value={providerId}
-            onChange={(e) => setProviderId(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-xs text-white"
-          >
-            {providers.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="text-[10px] text-zinc-500 block mb-1">API 端点（可选）</label>
-          <input
-            type="text"
-            value={endpoint}
-            onChange={(e) => setEndpoint(e.target.value)}
-            placeholder="使用默认端点"
-            className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-xs text-white placeholder:text-zinc-600 font-mono"
-          />
-        </div>
+      {/* API 端点 */}
+      <div>
+        <label className="text-[10px] text-zinc-500 block mb-1">API 端点 (Endpoint)</label>
+        <input
+          type="text"
+          value={endpoint}
+          onChange={(e) => setEndpoint(e.target.value)}
+          placeholder={type === 'chat' ? '/v1/chat/completions' : type === 'image' ? '/v1beta/models/{model}:generateContent' : '/v1/videos'}
+          className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-xs text-white placeholder:text-zinc-600 font-mono"
+        />
+        <p className="text-[9px] text-zinc-600 mt-1">
+          留空则使用默认端点
+        </p>
       </div>
 
+      {/* 提供商选择 */}
+      <div>
+        <label className="text-[10px] text-zinc-500 block mb-2">API 提供商</label>
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={() => setProviderMode('existing')}
+            className={`flex-1 py-2 text-xs rounded transition-colors ${
+              providerMode === 'existing'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+            }`}
+          >
+            使用已有提供商
+          </button>
+          <button
+            onClick={() => setProviderMode('custom')}
+            className={`flex-1 py-2 text-xs rounded transition-colors ${
+              providerMode === 'custom'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+            }`}
+          >
+            添加新提供商
+          </button>
+        </div>
+        
+        {providerMode === 'existing' ? (
+          <select
+            value={selectedProviderId}
+            onChange={(e) => setSelectedProviderId(e.target.value)}
+            className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-xs text-white"
+          >
+            {existingProviders.map((p) => (
+              <option key={p.id} value={p.id}>{p.name} ({p.baseUrl})</option>
+            ))}
+          </select>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <label className="text-[10px] text-zinc-500 block mb-1">提供商名称 *</label>
+              <input
+                type="text"
+                value={customProviderName}
+                onChange={(e) => setCustomProviderName(e.target.value)}
+                placeholder="如：OpenAI Official"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-xs text-white placeholder:text-zinc-600"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-zinc-500 block mb-1">API 基础 URL *</label>
+              <input
+                type="text"
+                value={customProviderBaseUrl}
+                onChange={(e) => setCustomProviderBaseUrl(e.target.value)}
+                placeholder="如：https://api.openai.com"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-xs text-white placeholder:text-zinc-600 font-mono"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 视频模型特有选项 */}
       {type === 'video' && (
         <div>
           <label className="text-[10px] text-zinc-500 block mb-1">API 模式</label>
@@ -142,7 +223,7 @@ const AddModelForm: React.FC<AddModelFormProps> = ({ type, onSave, onCancel }) =
                   : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
               }`}
             >
-              同步模式（Veo 类）
+              同步模式（Chat Completion 类）
             </button>
             <button
               onClick={() => setVideoMode('async')}
@@ -156,11 +237,12 @@ const AddModelForm: React.FC<AddModelFormProps> = ({ type, onSave, onCancel }) =
             </button>
           </div>
           <p className="text-[9px] text-zinc-600 mt-1">
-            同步模式：使用 /v1/chat/completions 端点；异步模式：使用 /v1/videos 端点
+            同步模式：直接返回结果；异步模式：先创建任务，再轮询获取结果
           </p>
         </div>
       )}
 
+      {/* 操作按钮 */}
       <div className="flex gap-3 pt-2">
         <button
           onClick={handleSave}
