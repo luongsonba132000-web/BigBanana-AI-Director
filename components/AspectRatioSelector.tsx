@@ -121,6 +121,10 @@ interface VideoSettingsPanelProps {
   /** 视频模型类型，veo 不支持方形和时长选择 */
   modelType: 'sora' | 'veo';
   disabled?: boolean;
+  /** 支持的横竖屏比例列表 */
+  supportedAspectRatios?: AspectRatio[];
+  /** 支持的时长列表 */
+  supportedDurations?: VideoDuration[];
 }
 
 /**
@@ -133,8 +137,23 @@ export const VideoSettingsPanel: React.FC<VideoSettingsPanelProps> = ({
   duration,
   onDurationChange,
   modelType,
-  disabled = false
+  disabled = false,
+  supportedAspectRatios,
+  supportedDurations,
 }) => {
+  // 根据模型支持的比例过滤
+  const allowSquare = supportedAspectRatios 
+    ? supportedAspectRatios.includes('1:1')
+    : modelType === 'sora';
+  
+  // 是否显示时长选择器
+  const showDuration = supportedDurations 
+    ? supportedDurations.length > 1
+    : modelType === 'sora';
+  
+  // 可用的时长列表
+  const availableDurations = supportedDurations || [4, 8, 12];
+
   return (
     <div className="flex items-center gap-4 flex-wrap">
       <div className="flex items-center gap-2">
@@ -142,19 +161,33 @@ export const VideoSettingsPanel: React.FC<VideoSettingsPanelProps> = ({
         <AspectRatioSelector
           value={aspectRatio}
           onChange={onAspectRatioChange}
-          allowSquare={modelType === 'sora'}
+          allowSquare={allowSquare}
           disabled={disabled}
         />
       </div>
       
-      {modelType === 'sora' && (
+      {showDuration && (
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-zinc-500 uppercase">时长</span>
-          <VideoDurationSelector
-            value={duration}
-            onChange={onDurationChange}
-            disabled={disabled}
-          />
+          <div className="flex gap-1">
+            {availableDurations.map((d) => (
+              <button
+                key={d}
+                onClick={() => !disabled && onDurationChange(d)}
+                disabled={disabled}
+                className={`
+                  px-3 py-1.5 rounded-md text-xs transition-all
+                  ${duration === d
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
+                  }
+                  ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                `}
+              >
+                {d}秒
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

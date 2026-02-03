@@ -758,7 +758,7 @@ Output ONLY the visual prompt text, no explanations.`;
  * 支持参考图像，确保角色和场景的一致性
  * @param prompt - 图像生成提示词
  * @param referenceImages - 参考图像数组（base64格式），第一张为场景参考，后续为角色参考
- * @param aspectRatio - 横竖屏比例，支持 '16:9'（横屏，默认）、'9:16'（竖屏）、'1:1'（方形）
+ * @param aspectRatio - 横竖屏比例，支持 '16:9'（横屏，默认）、'9:16'（竖屏）。注意：Gemini 3 Pro Image 不支持方形(1:1)
  * @returns 返回生成的图像base64字符串
  * @throws 如果图像生成失败则抛出错误
  */
@@ -770,6 +770,11 @@ export const generateImage = async (
   const apiKey = checkApiKey();
   const startTime = Date.now();
   const apiBase = getApiBase('image');
+  
+  // 从 modelRegistry 获取当前激活的图片模型
+  const activeImageModel = getActiveModel('image');
+  const imageModelId = activeImageModel?.id || 'gemini-3-pro-image-preview';
+  const imageModelEndpoint = activeImageModel?.endpoint || `/v1beta/models/${imageModelId}:generateContent`;
 
   try {
     // If we have reference images, instruct the model to use them for consistency
@@ -837,7 +842,7 @@ export const generateImage = async (
   }
 
   const response = await retryOperation(async () => {
-    const res = await fetch(`${apiBase}/v1beta/models/gemini-3-pro-image-preview:generateContent`, {
+    const res = await fetch(`${apiBase}${imageModelEndpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

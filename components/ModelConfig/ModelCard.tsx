@@ -73,7 +73,8 @@ const ModelCard: React.FC<ModelCardProps> = ({
     <div>
       <label className="text-[10px] text-zinc-500 block mb-1">默认比例</label>
       <div className="flex gap-2">
-        {(['16:9', '9:16', '1:1'] as AspectRatio[]).map((ratio) => (
+        {/* 从模型的 supportedAspectRatios 读取支持的比例 */}
+        {(params.supportedAspectRatios || ['16:9', '9:16']).map((ratio) => (
           <button
             key={ratio}
             onClick={() => handleParamChange('defaultAspectRatio', ratio)}

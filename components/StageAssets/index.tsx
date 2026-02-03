@@ -18,7 +18,9 @@ import SceneCard from './SceneCard';
 import WardrobeModal from './WardrobeModal';
 import { useAlert } from '../GlobalAlert';
 import { AspectRatioSelector } from '../AspectRatioSelector';
-import { getDefaultAspectRatio } from '../../services/modelRegistry';
+import { getDefaultAspectRatio, getImageModels, getActiveImageModel, getModelById } from '../../services/modelRegistry';
+import ModelSelector from '../ModelSelector';
+import { ImageModelDefinition } from '../../types/model';
 
 interface Props {
   project: ProjectState;
@@ -34,6 +36,12 @@ const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError })
   
   // 横竖屏选择状态
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>(() => getDefaultAspectRatio());
+  
+  // 图片模型选择状态
+  const defaultImageModel = getActiveImageModel();
+  const [selectedImageModelId, setSelectedImageModelId] = useState<string>(
+    defaultImageModel?.id || 'gemini-3-pro-image-preview'
+  );
 
   // 获取项目配置
   const language = getProjectLanguage(project.language, project.scriptData?.language);
@@ -585,13 +593,29 @@ const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError })
           </h2>
         </div>
         <div className="flex items-center gap-3">
+          {/* 图片模型选择 */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-zinc-500 uppercase">模型</span>
+            <ModelSelector
+              type="image"
+              value={selectedImageModelId}
+              onChange={setSelectedImageModelId}
+              disabled={!!batchProgress}
+              compact
+            />
+          </div>
+          <div className="w-px h-6 bg-zinc-800" />
           {/* 横竖屏选择 */}
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-zinc-500 uppercase">比例</span>
             <AspectRatioSelector
               value={aspectRatio}
               onChange={setAspectRatio}
-              allowSquare={true}
+              allowSquare={(() => {
+                // 根据选中的图片模型判断是否支持方形
+                const selectedModel = getModelById(selectedImageModelId) as ImageModelDefinition | undefined;
+                return selectedModel?.params?.supportedAspectRatios?.includes('1:1') ?? false;
+              })()}
               disabled={!!batchProgress}
             />
           </div>

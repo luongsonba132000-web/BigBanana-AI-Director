@@ -2,14 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Video, Loader2, Edit2 } from 'lucide-react';
 import { Shot, AspectRatio, VideoDuration } from '../../types';
 import { VideoSettingsPanel } from '../AspectRatioSelector';
-import { getDefaultAspectRatio, getDefaultVideoDuration } from '../../services/modelRegistry';
+import { 
+  getDefaultAspectRatio, 
+  getDefaultVideoDuration,
+  getVideoModels,
+  getActiveVideoModel,
+} from '../../services/modelRegistry';
+import { VideoModelDefinition } from '../../types/model';
 
 interface VideoGeneratorProps {
   shot: Shot;
   hasStartFrame: boolean;
   hasEndFrame: boolean;
-  onGenerate: (aspectRatio: AspectRatio, duration: VideoDuration) => void;
-  onModelChange: (model: 'sora-2' | 'veo') => void;
+  onGenerate: (aspectRatio: AspectRatio, duration: VideoDuration, modelId: string) => void;
   onEditPrompt: () => void;
 }
 
@@ -18,25 +23,42 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({
   hasStartFrame,
   hasEndFrame,
   onGenerate,
-  onModelChange,
   onEditPrompt
 }) => {
-  // 横竖屏和时长状态
+  // 获取可用的视频模型
+  const videoModels = getVideoModels().filter(m => m.isEnabled);
+  const defaultModel = getActiveVideoModel();
+  
+  // 状态
+  const [selectedModelId, setSelectedModelId] = useState<string>(
+    shot.videoModel || defaultModel?.id || videoModels[0]?.id || 'sora-2'
+  );
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>(() => getDefaultAspectRatio());
   const [duration, setDuration] = useState<VideoDuration>(() => getDefaultVideoDuration());
   
+  // 当前选中的模型
+  const selectedModel = videoModels.find(m => m.id === selectedModelId) as VideoModelDefinition | undefined;
+  const modelType: 'sora' | 'veo' = selectedModel?.params.mode === 'async' ? 'sora' : 'veo';
+  
   const isGenerating = shot.interval?.status === 'generating';
   const hasVideo = !!shot.interval?.videoUrl;
-  // 将旧的模型名映射到新的类型
-  const getModelType = (): 'sora' | 'veo' => {
-    if (shot.videoModel === 'sora-2') return 'sora';
-    if (shot.videoModel?.startsWith('veo')) return 'veo';
-    return 'sora'; // 默认 sora
-  };
-  const selectedModelType = getModelType();
+
+  // 当模型变化时，更新横竖屏和时长的默认值
+  useEffect(() => {
+    if (selectedModel) {
+      // 如果当前选择的横竖屏不被新模型支持，切换到默认值
+      if (!selectedModel.params.supportedAspectRatios.includes(aspectRatio)) {
+        setAspectRatio(selectedModel.params.defaultAspectRatio);
+      }
+      // 如果当前选择的时长不被新模型支持，切换到默认值
+      if (!selectedModel.params.supportedDurations.includes(duration)) {
+        setDuration(selectedModel.params.defaultDuration);
+      }
+    }
+  }, [selectedModelId]);
 
   const handleGenerate = () => {
-    onGenerate(aspectRatio, duration);
+    onGenerate(aspectRatio, duration, selectedModelId);
   };
 
   return (
@@ -66,19 +88,30 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({
           选择视频模型
         </label>
         <select
-          value={selectedModelType === 'sora' ? 'sora-2' : 'veo'}
-          onChange={(e) => onModelChange(e.target.value as any)}
+          value={selectedModelId}
+          onChange={(e) => setSelectedModelId(e.target.value)}
           className="w-full bg-black text-white border border-zinc-700 rounded-lg px-3 py-2 text-xs outline-none focus:border-indigo-500 transition-colors"
           disabled={isGenerating}
         >
-          <option value="sora-2">Sora-2 (OpenAI)</option>
-          <option value="veo">Veo 3.1 (Google)</option>
+          {videoModels.map((model) => {
+            const vm = model as VideoModelDefinition;
+            const modeLabel = vm.params.mode === 'async' ? '异步' : '同步';
+            return (
+              <option key={model.id} value={model.id}>
+                {model.name} ({modeLabel})
+              </option>
+            );
+          })}
         </select>
-        <p className="text-[9px] text-zinc-600 font-mono">
-          {selectedModelType === 'sora' 
-            ? '✦ Sora-2: 支持横屏/竖屏/方形，可选4/8/12秒时长'
-            : '✦ Veo 3.1: 高速生成，仅支持横屏/竖屏'}
-        </p>
+        {selectedModel && (
+          <p className="text-[9px] text-zinc-600 font-mono">
+            ✦ {selectedModel.name}: 
+            {selectedModel.params.mode === 'async' 
+              ? ` 支持 ${selectedModel.params.supportedAspectRatios.join('/')}，可选 ${selectedModel.params.supportedDurations.join('/')}秒`
+              : ` 高速生成，支持 ${selectedModel.params.supportedAspectRatios.join('/')}`
+            }
+          </p>
+        )}
       </div>
 
       {/* 视频设置：横竖屏 & 时长 */}
@@ -91,8 +124,10 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({
           onAspectRatioChange={setAspectRatio}
           duration={duration}
           onDurationChange={setDuration}
-          modelType={selectedModelType}
+          modelType={modelType}
           disabled={isGenerating}
+          supportedAspectRatios={selectedModel?.params.supportedAspectRatios}
+          supportedDurations={selectedModel?.params.supportedDurations}
         />
       </div>
       
@@ -120,7 +155,7 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({
         {isGenerating ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            生成视频中 ({aspectRatio}, {selectedModelType === 'sora' ? `${duration}秒` : 'Veo'})...
+            生成视频中 ({aspectRatio}, {modelType === 'sora' ? `${duration}秒` : selectedModel?.name})...
           </>
         ) : (
           <>{hasVideo ? '重新生成视频' : '开始生成视频'}</>

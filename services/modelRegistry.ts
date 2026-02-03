@@ -65,11 +65,20 @@ export const loadRegistry = (): ModelRegistryState => {
         }
       });
       
-      // 合并内置模型
+      // 合并内置模型，并确保内置模型的参数与代码保持同步
       const existingModelIds = parsed.models.map(m => m.id);
       ALL_BUILTIN_MODELS.forEach(bm => {
-        if (!existingModelIds.includes(bm.id)) {
+        const existingIndex = parsed.models.findIndex(m => m.id === bm.id);
+        if (existingIndex === -1) {
+          // 内置模型不存在，添加
           parsed.models.push(bm);
+        } else {
+          // 内置模型已存在，更新 params 以确保与代码同步（保留用户的 isEnabled 设置）
+          const existing = parsed.models[existingIndex];
+          parsed.models[existingIndex] = {
+            ...bm,
+            isEnabled: existing.isEnabled, // 保留用户的启用/禁用设置
+          };
         }
       });
       

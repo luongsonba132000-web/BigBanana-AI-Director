@@ -23,6 +23,7 @@ import ShotCard from './ShotCard';
 import ShotWorkbench from './ShotWorkbench';
 import ImagePreviewModal from './ImagePreviewModal';
 import { useAlert } from '../GlobalAlert';
+import { getDefaultAspectRatio } from '../../services/modelRegistry';
 
 interface Props {
   project: ProjectState;
@@ -38,6 +39,9 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
   const [isAIGenerating, setIsAIGenerating] = useState(false);
   const [useAIEnhancement, setUseAIEnhancement] = useState(false); // 是否使用AI增强提示词
   const [isSplittingShot, setIsSplittingShot] = useState(false); // 是否正在拆分镜头
+  
+  // 关键帧生成使用的横竖屏比例（从默认配置获取）
+  const [keyframeAspectRatio, setKeyframeAspectRatio] = useState<AspectRatio>(() => getDefaultAspectRatio());
   
   // 统一的编辑状态
   const [editModal, setEditModal] = useState<{
@@ -130,7 +134,8 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
     
     try {
       const referenceImages = getRefImagesForShot(shot, project.scriptData);
-      const url = await generateImage(prompt, referenceImages);
+      // 使用当前设置的横竖屏比例生成关键帧
+      const url = await generateImage(prompt, referenceImages, keyframeAspectRatio);
 
       updateProject((prevProject: ProjectState) => ({
         ...prevProject,
@@ -197,15 +202,17 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
    * @param shot - 镜头数据
    * @param aspectRatio - 横竖屏比例
    * @param duration - 视频时长（仅 Sora 有效）
+   * @param modelId - 视频模型 ID
    */
-  const handleGenerateVideo = async (shot: Shot, aspectRatio: AspectRatio = '16:9', duration: VideoDuration = 8) => {
+  const handleGenerateVideo = async (shot: Shot, aspectRatio: AspectRatio = '16:9', duration: VideoDuration = 8, modelId?: string) => {
     const sKf = shot.keyframes?.find(k => k.type === 'start');
     const eKf = shot.keyframes?.find(k => k.type === 'end');
 
     if (!sKf?.imageUrl) return showAlert("请先生成起始帧！", { type: 'warning' });
 
+    // 使用传入的 modelId 或默认模型
+    let selectedModel: string = modelId || shot.videoModel || DEFAULTS.videoModel;
     // 规范化模型名称：'veo_3_1_i2v_s_fast_fl_landscape' -> 'veo'
-    let selectedModel: string = shot.videoModel || DEFAULTS.videoModel;
     if (selectedModel.startsWith('veo_3_1')) {
       selectedModel = 'veo';
     }
@@ -221,8 +228,10 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
     
     const intervalId = shot.interval?.id || generateId(`int-${shot.id}`);
     
+    // 更新 shot 的 videoModel
     updateShot(shot.id, (s) => ({
       ...s,
+      videoModel: selectedModel as any,
       interval: s.interval ? { ...s.interval, status: 'generating', videoPrompt } : {
         id: intervalId,
         startKeyframeId: sKf.id,
@@ -768,8 +777,7 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
             onCopyNextStartFrame={handleCopyNextStartFrame}
             useAIEnhancement={useAIEnhancement}
             onToggleAIEnhancement={() => setUseAIEnhancement(!useAIEnhancement)}
-            onGenerateVideo={(aspectRatio, duration) => handleGenerateVideo(activeShot, aspectRatio, duration)}
-            onModelChange={(model) => updateShot(activeShot.id, s => ({ ...s, videoModel: model as any }))}
+            onGenerateVideo={(aspectRatio, duration, modelId) => handleGenerateVideo(activeShot, aspectRatio, duration, modelId)}
             onEditVideoPrompt={() => {
               // 如果videoPrompt不存在，动态生成一个
               let promptValue = activeShot.interval?.videoPrompt;

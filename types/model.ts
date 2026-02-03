@@ -202,10 +202,11 @@ export const DEFAULT_CHAT_PARAMS: ChatModelParams = {
 
 /**
  * 默认图片模型参数
+ * 注意：Gemini 3 Pro Image 只支持横屏(16:9)和竖屏(9:16)，不支持方形(1:1)
  */
 export const DEFAULT_IMAGE_PARAMS: ImageModelParams = {
   defaultAspectRatio: '16:9',
-  supportedAspectRatios: ['16:9', '9:16', '1:1'],
+  supportedAspectRatios: ['16:9', '9:16'],
 };
 
 /**
@@ -243,7 +244,7 @@ export const BUILTIN_CHAT_MODELS: ChatModelDefinition[] = [
     name: 'GPT-5.1',
     type: 'chat',
     providerId: 'antsk',
-    description: 'OpenAI 最新模型，推荐使用',
+    description: '剧情脚本切分首选：结构化输出稳定，适合分场/分镜、提取人物与事件',
     isBuiltIn: true,
     isEnabled: true,
     params: { ...DEFAULT_CHAT_PARAMS },
@@ -253,7 +254,7 @@ export const BUILTIN_CHAT_MODELS: ChatModelDefinition[] = [
     name: 'GPT-5.2',
     type: 'chat',
     providerId: 'antsk',
-    description: 'OpenAI 实验性模型，创意性更强',
+    description: '创意增强型切分：更适合提供多种切分方案、改写节奏与镜头建议（一致性略弱）',
     isBuiltIn: true,
     isEnabled: true,
     params: { ...DEFAULT_CHAT_PARAMS },
@@ -263,7 +264,7 @@ export const BUILTIN_CHAT_MODELS: ChatModelDefinition[] = [
     name: 'GPT-4.1',
     type: 'chat',
     providerId: 'antsk',
-    description: 'OpenAI 稳定版模型，适合复杂推理任务',
+    description: '严谨切分：对复杂叙事与长文本更稳，适合时间线梳理、因果关系与要点校对',
     isBuiltIn: true,
     isEnabled: true,
     params: { ...DEFAULT_CHAT_PARAMS },
@@ -273,7 +274,7 @@ export const BUILTIN_CHAT_MODELS: ChatModelDefinition[] = [
     name: 'Claude Sonnet 4.5',
     type: 'chat',
     providerId: 'antsk',
-    description: 'Anthropic Claude 模型，擅长创意写作和分析',
+    description: '长文友好：适合长篇剧本的分段、摘要与角色弧线整理，文字表达更细腻',
     isBuiltIn: true,
     isEnabled: true,
     params: { ...DEFAULT_CHAT_PARAMS },

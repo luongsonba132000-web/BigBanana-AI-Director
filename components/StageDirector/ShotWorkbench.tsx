@@ -32,8 +32,7 @@ interface ShotWorkbenchProps {
   onCopyNextStartFrame: () => void;
   useAIEnhancement: boolean;
   onToggleAIEnhancement: () => void;
-  onGenerateVideo: (aspectRatio: AspectRatio, duration: VideoDuration) => void;
-  onModelChange: (model: 'sora-2' | 'veo') => void;
+  onGenerateVideo: (aspectRatio: AspectRatio, duration: VideoDuration, modelId: string) => void;
   onEditVideoPrompt: () => void;
   onImageClick: (url: string, title: string) => void;
 }
@@ -66,7 +65,6 @@ const ShotWorkbench: React.FC<ShotWorkbenchProps> = ({
   useAIEnhancement,
   onToggleAIEnhancement,
   onGenerateVideo,
-  onModelChange,
   onEditVideoPrompt,
   onImageClick
 }) => {
@@ -235,7 +233,6 @@ const ShotWorkbench: React.FC<ShotWorkbenchProps> = ({
           hasStartFrame={!!startKf?.imageUrl}
           hasEndFrame={!!endKf?.imageUrl}
           onGenerate={onGenerateVideo}
-          onModelChange={onModelChange}
           onEditPrompt={onEditVideoPrompt}
         />
       </div>

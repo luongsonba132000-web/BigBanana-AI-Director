@@ -28,7 +28,7 @@
 ### 支持的比例
 - **横屏**：`16:9`（默认）
 - **竖屏**：`9:16`
-- **方形**：`1:1`
+- **注意**：Gemini 3 Pro Image 不支持方形 `1:1`
 
 ### 请求方式
 
@@ -686,7 +686,7 @@ curl -X POST "https://api.antsk.cn/v1/chat/completions" \
 
 | API | 横屏配置 | 竖屏配置 | 方形支持 | 配置方式 |
 |-----|---------|---------|---------|---------|
-| **Gemini Image** | `16:9`（默认，无需配置） | 在 `generationConfig.imageConfig` 中添加 `aspectRatio: "9:16"` | `1:1` | 请求体字段 |
+| **Gemini Image** | `16:9`（默认，无需配置） | 在 `generationConfig.imageConfig` 中添加 `aspectRatio: "9:16"` | ❌ 不支持 | 请求体字段 |
 | **Sora-2** | `size: "1280x720"` | `size: "720x1280"` | `size: "720x720"` | FormData 参数 |
 | **Veo 3.1** | 模型名 `*_landscape` | 模型名 `*_portrait` | ❌ 不支持 | 模型名称 |
 
