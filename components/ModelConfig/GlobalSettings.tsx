@@ -181,7 +181,7 @@ const GlobalSettings: React.FC<GlobalSettingsProps> = ({ onRefresh }) => {
       <div className="p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
         <h4 className="text-xs font-bold text-zinc-400 mb-2">配置说明</h4>
         <ul className="text-[10px] text-zinc-600 space-y-1 list-disc list-inside">
-          <li>全局 API Key 用于所有内置模型的调用</li>
+          <li>全局 API Key 用于所有BigBanana API 内置模型的调用</li>
           <li>你可以在各模型类别中调整模型参数（温度、Token 等）</li>
           <li>支持添加自定义模型，使用其他 API 服务</li>
           <li>所有配置仅保存在本地浏览器，不会上传到服务器</li>
