@@ -487,10 +487,11 @@ const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError })
     try {
       const refImages = char.referenceImage ? [char.referenceImage] : [];
       const regionalPrefix = getRegionalPrefix(language, 'character');
-      const enhancedPrompt = `${regionalPrefix}Character: ${char.name}. ${variation.visualPrompt}. Keep facial features consistent with reference.`;
+      // 构建变体专用提示词：强调服装变化
+      const enhancedPrompt = `${regionalPrefix}Character "${char.name}" wearing NEW OUTFIT: ${variation.visualPrompt}. This is a costume/outfit change - the character's face and identity must remain identical to the reference, but they should be wearing the described new outfit.`;
       
-      // 使用选择的横竖屏比例
-      const imageUrl = await generateImage(enhancedPrompt, refImages, aspectRatio);
+      // 使用选择的横竖屏比例，启用变体模式
+      const imageUrl = await generateImage(enhancedPrompt, refImages, aspectRatio, true);
 
       const newData = { ...project.scriptData! };
       const c = newData.characters.find(c => compareIds(c.id, charId));

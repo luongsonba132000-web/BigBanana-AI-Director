@@ -786,13 +786,15 @@ Output ONLY the visual prompt text, no explanations.`;
  * @param prompt - 图像生成提示词
  * @param referenceImages - 参考图像数组（base64格式），第一张为场景参考，后续为角色参考
  * @param aspectRatio - 横竖屏比例，支持 '16:9'（横屏，默认）、'9:16'（竖屏）。注意：Gemini 3 Pro Image 不支持方形(1:1)
+ * @param isVariation - 是否为角色变体生成模式（服装变体），变体模式下保持面部一致但改变服装
  * @returns 返回生成的图像base64字符串
  * @throws 如果图像生成失败则抛出错误
  */
 export const generateImage = async (
   prompt: string, 
   referenceImages: string[] = [],
-  aspectRatio: AspectRatio = '16:9'
+  aspectRatio: AspectRatio = '16:9',
+  isVariation: boolean = false
 ): Promise<string> => {
   const apiKey = checkApiKey('image');
   const startTime = Date.now();
@@ -807,7 +809,39 @@ export const generateImage = async (
     // If we have reference images, instruct the model to use them for consistency
     let finalPrompt = prompt;
     if (referenceImages.length > 0) {
-      finalPrompt = `
+      if (isVariation) {
+        // 变体模式：保持面部一致，但改变服装/造型
+        finalPrompt = `
+      ⚠️⚠️⚠️ CRITICAL REQUIREMENTS - CHARACTER OUTFIT VARIATION ⚠️⚠️⚠️
+      
+      Reference Images Information:
+      - The provided image shows the CHARACTER's BASE APPEARANCE that you MUST use as reference for FACE ONLY.
+      
+      Task:
+      Generate a character image with a NEW OUTFIT/COSTUME based on this description: "${prompt}".
+      
+      ⚠️ ABSOLUTE REQUIREMENTS (NON-NEGOTIABLE):
+      
+      1. FACE & IDENTITY - MUST BE 100% IDENTICAL TO REFERENCE:
+         • Facial Features: Eyes (color, shape, size), nose structure, mouth shape, facial contours must be EXACTLY the same
+         • Hairstyle & Hair Color: Length, color, texture, and style must be PERFECTLY matched (unless prompt specifies hair change)
+         • Skin tone and facial structure: MUST remain identical
+         • Expression can vary based on prompt
+         
+      2. OUTFIT/CLOTHING - MUST BE COMPLETELY DIFFERENT FROM REFERENCE:
+         • Generate NEW clothing/outfit as described in the prompt
+         • DO NOT copy the clothing from the reference image
+         • The outfit should match the description provided: "${prompt}"
+         • Include all accessories, props, or costume details mentioned in the prompt
+         
+      3. Body proportions should remain consistent with the reference.
+      
+      ⚠️ This is an OUTFIT VARIATION task - The face MUST match the reference, but the CLOTHES MUST be NEW as described!
+      ⚠️ If the new outfit is not clearly visible and different from the reference, the task has FAILED!
+    `;
+      } else {
+        // 普通模式：完全一致性（分镜生成等场景）
+        finalPrompt = `
       ⚠️⚠️⚠️ CRITICAL REQUIREMENTS - CHARACTER CONSISTENCY ⚠️⚠️⚠️
       
       Reference Images Information:
@@ -831,6 +865,7 @@ export const generateImage = async (
       ⚠️ DO NOT create variations or interpretations of the character - STRICT REPLICATION ONLY!
       ⚠️ Character appearance consistency is THE MOST IMPORTANT requirement!
     `;
+      }
     }
 
   const parts: any[] = [{ text: finalPrompt }];
