@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ProjectState } from '../../types';
-import { parseScriptToData, generateShotList, continueScript, rewriteScript } from '../../services/geminiService';
+import { parseScriptToData, generateShotList, continueScript, continueScriptStream, rewriteScript, rewriteScriptStream } from '../../services/geminiService';
 import { getFinalValue, validateConfig } from './utils';
 import { DEFAULTS } from './constants';
 import ConfigPanel from './ConfigPanel';
@@ -134,14 +134,36 @@ const StageScript: React.FC<Props> = ({ project, updateProject }) => {
 
     setIsContinuing(true);
     setError(null);
+    const baseScript = localScript;
+    let streamed = '';
     try {
-      const continuedContent = await continueScript(localScript, localLanguage, finalModel);
-      const newScript = localScript + '\n\n' + continuedContent;
-      setLocalScript(newScript);
-      updateProject({ rawScript: newScript });
+      const continuedContent = await continueScriptStream(
+        baseScript,
+        localLanguage,
+        finalModel,
+        (delta) => {
+          streamed += delta;
+          const newScript = baseScript + '\n\n' + streamed;
+          setLocalScript(newScript);
+          updateProject({ rawScript: newScript });
+        }
+      );
+      if (continuedContent) {
+        const newScript = baseScript + '\n\n' + continuedContent;
+        setLocalScript(newScript);
+        updateProject({ rawScript: newScript });
+      }
     } catch (err: any) {
       console.error(err);
       setError(`AI续写失败: ${err.message || "连接失败"}`);
+      try {
+        const continuedContent = await continueScript(baseScript, localLanguage, finalModel);
+        const newScript = baseScript + '\n\n' + continuedContent;
+        setLocalScript(newScript);
+        updateProject({ rawScript: newScript });
+      } catch (fallbackErr: any) {
+        console.error(fallbackErr);
+      }
     } finally {
       setIsContinuing(false);
     }
@@ -161,13 +183,35 @@ const StageScript: React.FC<Props> = ({ project, updateProject }) => {
 
     setIsRewriting(true);
     setError(null);
+    const baseScript = localScript;
+    let streamed = '';
     try {
-      const rewrittenContent = await rewriteScript(localScript, localLanguage, finalModel);
-      setLocalScript(rewrittenContent);
-      updateProject({ rawScript: rewrittenContent });
+      setLocalScript('');
+      updateProject({ rawScript: '' });
+      const rewrittenContent = await rewriteScriptStream(
+        baseScript,
+        localLanguage,
+        finalModel,
+        (delta) => {
+          streamed += delta;
+          setLocalScript(streamed);
+          updateProject({ rawScript: streamed });
+        }
+      );
+      if (rewrittenContent) {
+        setLocalScript(rewrittenContent);
+        updateProject({ rawScript: rewrittenContent });
+      }
     } catch (err: any) {
       console.error(err);
       setError(`AI改写失败: ${err.message || "连接失败"}`);
+      try {
+        const rewrittenContent = await rewriteScript(baseScript, localLanguage, finalModel);
+        setLocalScript(rewrittenContent);
+        updateProject({ rawScript: rewrittenContent });
+      } catch (fallbackErr: any) {
+        console.error(fallbackErr);
+      }
     } finally {
       setIsRewriting(false);
     }

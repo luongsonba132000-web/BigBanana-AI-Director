@@ -322,6 +322,121 @@ const chatCompletion = async (prompt: string, model: string = 'gpt-5.1', tempera
 };
 
 /**
+ * 调用聊天完成API（SSE流式模式）
+ * @param prompt - 提示词内容
+ * @param model - 使用的模型名称
+ * @param temperature - 温度参数
+ * @param responseFormat - 响应格式（仅用于JSON场景）
+ * @param timeout - 超时时间（毫秒）
+ * @param onDelta - 每次收到增量文本时回调
+ * @returns 返回完整文本
+ */
+const chatCompletionStream = async (
+  prompt: string,
+  model: string = 'gpt-5.1',
+  temperature: number = 0.7,
+  responseFormat: 'json_object' | undefined,
+  timeout: number = 600000,
+  onDelta?: (delta: string) => void
+): Promise<string> => {
+  const apiKey = checkApiKey('chat', model);
+  const requestBody: any = {
+    model: model,
+    messages: [{ role: 'user', content: prompt }],
+    temperature: temperature,
+    stream: true
+  };
+
+  if (responseFormat === 'json_object') {
+    requestBody.response_format = { type: 'json_object' };
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const apiBase = getApiBase('chat', model);
+    const resolvedModel = resolveModel('chat', model);
+    const endpoint = resolvedModel?.endpoint || '/v1/chat/completions';
+    const response = await fetch(`${apiBase}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP错误: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error?.message || errorMessage;
+      } catch (e) {
+        const errorText = await response.text();
+        if (errorText) errorMessage = errorText;
+      }
+      throw new Error(errorMessage);
+    }
+
+    if (!response.body) {
+      throw new Error('响应流为空，无法进行流式处理');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let fullText = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      let boundaryIndex = buffer.indexOf('\n\n');
+      while (boundaryIndex !== -1) {
+        const chunk = buffer.slice(0, boundaryIndex).trim();
+        buffer = buffer.slice(boundaryIndex + 2);
+
+        if (chunk) {
+          const lines = chunk.split('\n');
+          for (const line of lines) {
+            if (!line.startsWith('data:')) continue;
+            const dataStr = line.replace(/^data:\s*/, '');
+            if (dataStr === '[DONE]') {
+              clearTimeout(timeoutId);
+              return fullText;
+            }
+            try {
+              const payload = JSON.parse(dataStr);
+              const delta = payload?.choices?.[0]?.delta?.content || payload?.choices?.[0]?.message?.content || '';
+              if (delta) {
+                fullText += delta;
+                onDelta?.(delta);
+              }
+            } catch (e) {
+              // 忽略解析失败的行
+            }
+          }
+        }
+
+        boundaryIndex = buffer.indexOf('\n\n');
+      }
+    }
+
+    clearTimeout(timeoutId);
+    return fullText;
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error(`请求超时（${timeout}ms）`);
+    }
+    throw error;
+  }
+};
+
+/**
  * Agent 1 & 2: Script Structuring & Breakdown
  * Uses antsk chat completion for fast, structured text generation.
  */
@@ -1480,6 +1595,62 @@ ${existingScript}
 };
 
 /**
+ * AI续写功能（流式）- 基于已有剧本内容续写后续情节
+ * @param existingScript - 已有的剧本内容
+ * @param language - 输出语言
+ * @param model - 使用的AI模型
+ * @param onDelta - 流式增量回调
+ * @returns 续写的完整内容
+ */
+export const continueScriptStream = async (
+  existingScript: string,
+  language: string = '中文',
+  model: string = 'gpt-5.1',
+  onDelta?: (delta: string) => void
+): Promise<string> => {
+  console.log('✍️ continueScriptStream 调用 - 使用模型:', model);
+  const startTime = Date.now();
+
+  const prompt = `
+你是一位资深剧本创作者。请在充分理解下方已有剧本内容的基础上，续写后续情节。
+
+续写要求：
+1. 严格保持原剧本的风格、语气、人物性格和叙事节奏，确保无明显风格断层。
+2. 情节发展需自然流畅，逻辑严密，因果关系合理，避免突兀转折。
+3. 有效增加戏剧冲突和情感张力，使故事更具吸引力和张力。
+4. 续写内容应为原有剧本长度的30%-50%，字数适中，避免过短或过长。
+5. 保持剧本的原有格式，包括场景描述、人物对白、舞台指示等，确保格式一致。
+6. 输出语言为：${language}，用词准确、表达流畅。
+7. 仅输出续写剧本内容，不添加任何说明、前缀或后缀。
+
+已有剧本内容：
+${existingScript}
+
+请直接续写剧本内容。（不要包含"续写："等前缀）：
+`;
+
+  try {
+    const result = await retryOperation(() => chatCompletionStream(prompt, model, 0.8, undefined, 600000, onDelta));
+    const duration = Date.now() - startTime;
+
+    await addRenderLogWithTokens({
+      type: 'script-parsing',
+      resourceId: 'continue-script',
+      resourceName: 'AI续写剧本（流式）',
+      status: 'success',
+      model,
+      duration,
+      prompt: existingScript.substring(0, 200) + '...'
+    });
+
+    return result;
+  } catch (error) {
+    console.error('❌ 续写失败（流式）:', error);
+    throw error;
+  }
+};
+
+/**
  * AI改写功能 - 对整个剧本进行改写，让情节更连贯
  * @param originalScript - 原始剧本内容
  * @param language - 输出语言
@@ -1529,6 +1700,66 @@ ${originalScript}
     return result;
   } catch (error) {
     console.error('❌ 改写失败:', error);
+    throw error;
+  }
+};
+
+/**
+ * AI改写功能（流式）- 对整个剧本进行改写，让情节更连贯
+ * @param originalScript - 原始剧本内容
+ * @param language - 输出语言
+ * @param model - 使用的AI模型
+ * @param onDelta - 流式增量回调
+ * @returns 改写后的完整剧本
+ */
+export const rewriteScriptStream = async (
+  originalScript: string,
+  language: string = '中文',
+  model: string = 'gpt-5.1',
+  onDelta?: (delta: string) => void
+): Promise<string> => {
+  console.log('🔄 rewriteScriptStream 调用 - 使用模型:', model);
+  const startTime = Date.now();
+
+  const prompt = `
+你是一位顶级剧本编剧顾问，擅长提升剧本的结构、情感和戏剧张力。请对下方提供的剧本进行系统性、创造性改写，目标是使剧本在连贯性、流畅性和戏剧冲突等方面显著提升。
+
+改写具体要求如下：
+
+1. 保留原剧本的核心故事线和主要人物设定，不改变故事主旨。
+2. 优化情节结构，确保事件发展具有清晰的因果关系，逻辑严密。
+3. 增强场景之间的衔接与转换，使整体叙事流畅自然。
+4. 丰富和提升人物对话，使其更具个性、情感色彩和真实感，避免生硬或刻板。
+5. 强化戏剧冲突，突出人物之间的矛盾与情感张力，增加情节的吸引力和感染力。
+6. 深化人物内心活动和情感描写，提升剧本的情感深度。
+7. 优化整体节奏，合理分配高潮与缓和段落，避免情节拖沓或推进过快。
+8. 保持或适度增加剧本内容长度，确保内容充实但不过度冗长。
+9. 严格遵循剧本格式规范，包括场景标注、人物台词、舞台指示等。
+10. 输出语言为：${language}，确保语言风格与剧本类型相符。
+
+原始剧本内容如下：
+${originalScript}
+
+请根据以上要求，输出经过全面改写、结构优化、情感丰富的完整剧本文本。
+`;
+
+  try {
+    const result = await retryOperation(() => chatCompletionStream(prompt, model, 0.7, undefined, 600000, onDelta));
+    const duration = Date.now() - startTime;
+
+    await addRenderLogWithTokens({
+      type: 'script-parsing',
+      resourceId: 'rewrite-script',
+      resourceName: 'AI改写剧本（流式）',
+      status: 'success',
+      model,
+      duration,
+      prompt: originalScript.substring(0, 200) + '...'
+    });
+
+    return result;
+  } catch (error) {
+    console.error('❌ 改写失败（流式）:', error);
     throw error;
   }
 };
