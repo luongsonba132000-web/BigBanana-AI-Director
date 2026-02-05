@@ -389,7 +389,16 @@ const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError })
       id: previous.id
     };
 
-    updateProject({ scriptData: newData });
+    const nextShots = project.shots.map((shot) => {
+      if (!shot.characterVariations || !shot.characterVariations[targetId]) return shot;
+      const { [targetId]: _removed, ...rest } = shot.characterVariations;
+      return {
+        ...shot,
+        characterVariations: Object.keys(rest).length > 0 ? rest : undefined
+      };
+    });
+
+    updateProject({ scriptData: newData, shots: nextShots });
     showAlert(`已替换角色：${previous.name} → ${cloned.name}`, { type: 'success' });
     setShowLibraryModal(false);
     setReplaceTargetCharId(null);
