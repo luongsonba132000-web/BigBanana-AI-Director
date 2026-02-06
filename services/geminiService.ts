@@ -13,6 +13,24 @@ import {
   getActiveImageModel,
 } from './modelRegistry';
 
+type ScriptLogCallback = (message: string) => void;
+
+let scriptLogCallback: ScriptLogCallback | null = null;
+
+export const setScriptLogCallback = (callback: ScriptLogCallback) => {
+  scriptLogCallback = callback;
+};
+
+export const clearScriptLogCallback = () => {
+  scriptLogCallback = null;
+};
+
+export const logScriptProgress = (message: string) => {
+  if (scriptLogCallback) {
+    scriptLogCallback(message);
+  }
+};
+
 // Custom error class for API Key issues
 export class ApiKeyError extends Error {
   constructor(message: string) {
@@ -452,6 +470,7 @@ const chatCompletionStream = async (
  */
 export const parseScriptToData = async (rawText: string, language: string = '中文', model: string = 'gpt-5.1', visualStyle: string = 'live-action'): Promise<ScriptData> => {
   console.log('📝 parseScriptToData 调用 - 使用模型:', model, '视觉风格:', visualStyle);
+  logScriptProgress('正在解析剧本结构...');
   const startTime = Date.now();
   
   const prompt = `
@@ -502,6 +521,7 @@ export const parseScriptToData = async (rawText: string, language: string = '中
 
   // Generate visual prompts for characters and scenes
   console.log("🎨 正在为角色和场景生成视觉提示词...", `风格: ${visualStyle}`);
+  logScriptProgress(`正在生成角色与场景的视觉提示词（风格：${visualStyle}）...`);
   
   // Generate character visual prompts
   for (let i = 0; i < characters.length; i++) {
@@ -510,6 +530,7 @@ export const parseScriptToData = async (rawText: string, language: string = '中
       if (i > 0) await new Promise(resolve => setTimeout(resolve, 1500));
       
       console.log(`  生成角色提示词: ${characters[i].name}`);
+      logScriptProgress(`生成角色视觉提示词：${characters[i].name}`);
       const prompts = await generateVisualPrompts('character', characters[i], genre, model, visualStyle, language);
       characters[i].visualPrompt = prompts.visualPrompt;
       characters[i].negativePrompt = prompts.negativePrompt;
@@ -526,6 +547,7 @@ export const parseScriptToData = async (rawText: string, language: string = '中
       if (i > 0 || characters.length > 0) await new Promise(resolve => setTimeout(resolve, 1500));
       
       console.log(`  生成场景提示词: ${scenes[i].location}`);
+      logScriptProgress(`生成场景视觉提示词：${scenes[i].location}`);
       const prompts = await generateVisualPrompts('scene', scenes[i], genre, model, visualStyle, language);
       scenes[i].visualPrompt = prompts.visualPrompt;
       scenes[i].negativePrompt = prompts.negativePrompt;
@@ -536,6 +558,7 @@ export const parseScriptToData = async (rawText: string, language: string = '中
   }
 
   console.log("✅ 视觉提示词生成完成！");
+  logScriptProgress('视觉提示词生成完成');
 
   const result = {
     title: parsed.title || "未命名剧本",
@@ -585,6 +608,7 @@ export const parseScriptToData = async (rawText: string, language: string = '中
  */
 export const generateShotList = async (scriptData: ScriptData, model: string = 'gpt-5.1'): Promise<Shot[]> => {
   console.log('🎬 generateShotList 调用 - 使用模型:', model, '视觉风格:', scriptData.visualStyle);
+  logScriptProgress('正在生成分镜列表...');
   const overallStartTime = Date.now();
   
   if (!scriptData.scenes || scriptData.scenes.length === 0) {
