@@ -102,6 +102,37 @@ Technical Requirements:
 - Language: Use {language} for voiceover and subtitles`
   },
 
+  // 九宫格分镜模式的视频提示词（Veo R2V 多图模式专用）
+  veoNineGrid: {
+    chinese: `参考图片描述了同一场景的9个不同镜头视角（3x3九宫格分镜板），请根据这些参考图和镜头规划生成一段连贯的视频。
+
+动作描述：{actionSummary}
+
+九宫格各面板镜头规划：
+{panelDescriptions}
+
+技术要求：
+- 按面板1→9的顺序依次切换不同的镜头视角，形成流畅的蒙太奇剪辑效果
+- 镜头切换：每个面板视角停留约{secondsPerPanel}秒，通过自然的镜头运动过渡到下一个视角
+- 整体镜头运动：{cameraMovement}
+- 角色一致性：全程保持角色外观完全一致
+- 配音语言：使用中文配音`,
+
+    english: `The reference images depict 9 different camera angles of the same scene (3x3 storyboard grid). Generate a continuous video that transitions through each panel's camera angle in order.
+
+Action Description: {actionSummary}
+
+Storyboard Panel Breakdown:
+{panelDescriptions}
+
+Technical Requirements:
+- Transition through the camera angles of panels 1→9 sequentially, creating a smooth montage-style edit
+- Shot Pacing: Each panel's angle should last approximately {secondsPerPanel} seconds, with natural camera movements transitioning to the next angle
+- Overall Camera Movement: {cameraMovement}
+- Character Consistency: Maintain identical character appearance throughout
+- Language: Use {language} for voiceover and subtitles`
+  },
+
   veo: {
     simple: `{actionSummary}
 

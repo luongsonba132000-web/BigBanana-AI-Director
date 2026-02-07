@@ -37,6 +37,8 @@ interface ShotWorkbenchProps {
   onEditVideoPrompt: () => void;
   onVideoModelChange: (modelId: string) => void;
   onImageClick: (url: string, title: string) => void;
+  /** 参考图数量（角色+场景），用于多图模式提示 */
+  referenceImageCount?: number;
   // 九宫格分镜预览（高级功能）
   onGenerateNineGrid: () => void;
   nineGrid?: NineGridData;
@@ -76,6 +78,7 @@ const ShotWorkbench: React.FC<ShotWorkbenchProps> = ({
   onEditVideoPrompt,
   onVideoModelChange,
   onImageClick,
+  referenceImageCount = 0,
   onGenerateNineGrid,
   nineGrid,
   onSelectNineGridPanel,
@@ -223,7 +226,8 @@ const ShotWorkbench: React.FC<ShotWorkbenchProps> = ({
           </div>
         </div>
 
-        {/* Nine Grid Storyboard Preview - Advanced Feature */}
+        {/* Nine Grid Storyboard Preview - Advanced Feature (不在 veo 首尾帧模式下显示) */}
+        {currentVideoModelId !== 'veo' && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <button
@@ -276,6 +280,7 @@ const ShotWorkbench: React.FC<ShotWorkbenchProps> = ({
             </div>
           )}
         </div>
+        )}
 
         {/* Visual Production */}
         <KeyframeEditor
@@ -302,6 +307,7 @@ const ShotWorkbench: React.FC<ShotWorkbenchProps> = ({
           shot={shot}
           hasStartFrame={!!startKf?.imageUrl}
           hasEndFrame={!!endKf?.imageUrl}
+          referenceImageCount={referenceImageCount}
           onGenerate={onGenerateVideo}
           onEditPrompt={onEditVideoPrompt}
           onModelChange={onVideoModelChange}
