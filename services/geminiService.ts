@@ -837,7 +837,7 @@ const VISUAL_STYLE_PROMPTS: { [key: string]: string } = {
 };
 
 /**
- * 负面提示词，用于排除不想要的视觉元素
+ * 负面提示词（角色用），用于排除不想要的视觉元素
  * 根据不同视觉风格定义需要避免的内容
  */
 const NEGATIVE_PROMPTS: { [key: string]: string } = {
@@ -847,6 +847,19 @@ const NEGATIVE_PROMPTS: { [key: string]: string } = {
   '3d-animation': 'photorealistic, 2d, flat, hand-drawn, low poly, bad topology, texture artifacts, z-fighting, clipping, low quality, blurry, watermark, text, bad rigging, unnatural movement',
   'cyberpunk': 'bright daylight, pastoral, medieval, fantasy, cartoon, low tech, rural, natural, watermark, text, logo, low quality, blurry, amateur',
   'oil-painting': 'digital art, photorealistic, 3d render, cartoon, anime, low quality, blurry, watermark, text, amateur, poorly painted, muddy colors, overworked canvas',
+};
+
+/**
+ * 场景专用负面提示词，额外排除人物/人形元素
+ * 确保生成的场景图为纯环境背景，不包含任何人物，避免干扰后续角色合成
+ */
+const SCENE_NEGATIVE_PROMPTS: { [key: string]: string } = {
+  'live-action': 'person, people, human, man, woman, child, figure, silhouette, crowd, pedestrian, portrait, face, body, hands, feet, ' + NEGATIVE_PROMPTS['live-action'],
+  'anime': 'person, people, human, character, figure, silhouette, crowd, portrait, face, body, hands, ' + NEGATIVE_PROMPTS['anime'],
+  '2d-animation': 'person, people, human, character, figure, silhouette, crowd, portrait, face, body, ' + NEGATIVE_PROMPTS['2d-animation'],
+  '3d-animation': 'person, people, human, character, figure, silhouette, crowd, portrait, face, body, ' + NEGATIVE_PROMPTS['3d-animation'],
+  'cyberpunk': 'person, people, human, figure, silhouette, crowd, pedestrian, portrait, face, body, ' + NEGATIVE_PROMPTS['cyberpunk'],
+  'oil-painting': 'person, people, human, figure, silhouette, crowd, portrait, face, body, ' + NEGATIVE_PROMPTS['oil-painting'],
 };
 
 /**
@@ -862,7 +875,10 @@ const NEGATIVE_PROMPTS: { [key: string]: string } = {
  */
 export const generateVisualPrompts = async (type: 'character' | 'scene', data: Character | Scene, genre: string, model: string = 'gpt-5.1', visualStyle: string = 'live-action', language: string = '中文'): Promise<{ visualPrompt: string; negativePrompt: string }> => {
    const stylePrompt = VISUAL_STYLE_PROMPTS[visualStyle] || visualStyle;
-   const negativePrompt = NEGATIVE_PROMPTS[visualStyle] || NEGATIVE_PROMPTS['live-action'];
+   // 场景使用专用负面提示词（排除人物），角色使用通用负面提示词
+   const negativePrompt = type === 'scene'
+     ? (SCENE_NEGATIVE_PROMPTS[visualStyle] || SCENE_NEGATIVE_PROMPTS['live-action'])
+     : (NEGATIVE_PROMPTS[visualStyle] || NEGATIVE_PROMPTS['live-action']);
    
    let prompt: string;
    
@@ -899,7 +915,7 @@ Output ONLY the visual prompt text, no explanations.`;
      const scene = data as Scene;
      prompt = `You are an expert cinematographer and AI prompt engineer for ${visualStyle} productions.
 
-Create a cinematic scene prompt with this structure:
+Create a cinematic scene/environment prompt with this structure:
 
 Scene Data:
 - Location: ${scene.location}
@@ -908,7 +924,7 @@ Scene Data:
 - Genre: ${genre}
 
 REQUIRED STRUCTURE (output in ${language}):
-1. Environment: [detailed location description with architectural/natural elements]
+1. Environment: [detailed location description with architectural/natural elements, props, furniture, vehicles, or objects that tell the story of the space]
 2. Lighting: [specific lighting setup - direction, color temperature, quality (soft/hard), key light source]
 3. Composition: [camera angle (eye-level/low/high), framing rules (rule of thirds/symmetry), depth layers]
 4. Atmosphere: [mood, weather, particles in air (fog/dust/rain), environmental effects]
@@ -916,9 +932,12 @@ REQUIRED STRUCTURE (output in ${language}):
 6. Technical Quality: ${stylePrompt}
 
 CRITICAL RULES:
+- ⚠️ ABSOLUTELY NO PEOPLE, CHARACTERS, HUMAN FIGURES, OR SILHOUETTES in the scene - this is a PURE ENVIRONMENT/BACKGROUND shot
+- The scene must be an EMPTY environment - no humans, no crowds, no pedestrians, no figures in the distance
 - Use professional cinematography terminology
 - Specify light sources and direction (e.g., "golden hour backlight from right")
 - Include composition guidelines (rule of thirds, leading lines, depth of field)
+- You may include environmental storytelling elements (e.g., an abandoned coffee cup, footprints in snow, a parked car) to make the scene feel lived-in without showing people
 - Output as single paragraph, comma-separated
 - MUST emphasize ${visualStyle} style throughout
 - Length: 70-110 words
