@@ -92,11 +92,24 @@ export const loadRegistry = (): ModelRegistryState => {
           // 内置模型不存在，添加
           parsed.models.push(bm);
         } else {
-          // 内置模型已存在，更新 params 以确保与代码同步（保留用户的 isEnabled 设置）
+          // 内置模型已存在：以代码定义为基础，保留用户的个性化设置
           const existing = parsed.models[existingIndex];
+          // 用户可调整的偏好参数（defaultAspectRatio, temperature, maxTokens, defaultDuration 等）
+          // 结构性参数（supportedAspectRatios, supportedDurations, mode 等）始终从代码同步
+          const USER_PREF_KEYS = ['defaultAspectRatio', 'temperature', 'maxTokens', 'defaultDuration'];
+          const mergedParams = { ...(bm as any).params };
+          const existingParams = (existing as any).params;
+          if (existingParams) {
+            for (const key of USER_PREF_KEYS) {
+              if (key in existingParams && existingParams[key] !== undefined) {
+                mergedParams[key] = existingParams[key];
+              }
+            }
+          }
           parsed.models[existingIndex] = {
             ...bm,
-            isEnabled: existing.isEnabled, // 保留用户的启用/禁用设置
+            isEnabled: existing.isEnabled,
+            params: mergedParams as any,
           };
         }
       });
