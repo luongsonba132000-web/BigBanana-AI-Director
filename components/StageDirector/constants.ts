@@ -67,17 +67,25 @@ Technical Requirements:
   
   // 九宫格分镜模式的视频提示词（Sora-2 专用）
   sora2NineGrid: {
-    chinese: `提供的参考图片是一张3x3九宫格分镜板（Storyboard），仅作为镜头规划参考，请勿在视频中展示该分镜板图片本身。
-视频必须直接从面板1的镜头画面开始，然后按照从左到右、从上到下的顺序（面板1→9）依次切换镜头视角，生成一段连贯的视频。
+    chinese: `⚠️ 最高优先级指令 ⚠️：提供的参考图片是一张3x3九宫格分镜板，这张图只是镜头规划的元数据，严禁在视频任何画面中出现！视频第一帧必须直接是面板1描述的全屏镜头画面——不是九宫格图片，不是缩略图，不是分镜板，而是面板1描述的实际场景画面。
+
+⛔ 绝对禁止事项（违反任何一条将视为失败）：
+1. 禁止在视频的第一帧、最后一帧或任何中间帧展示九宫格分镜板原图
+2. 禁止在视频中出现任何包含网格线、分割线或多格画面的分镜板样式画面
+3. 禁止将参考图片作为视频的开场画面或转场画面
+4. 禁止展示任何缩略图集合、图片拼贴或多画面并列的效果
+
+✅ 正确做法：
+视频必须直接从面板1描述的全屏场景画面开始（就像一部真正的电影那样开场），然后按照面板1→9的顺序依次切换镜头视角，生成一段连贯的视频。
 
 动作描述：{actionSummary}
 
-九宫格各面板镜头规划：
+九宫格各面板镜头规划（仅作为镜头调度参考，不要在视频中展示这个规划表本身）：
 {panelDescriptions}
 
 技术要求：
-- 最关键：视频的第一帧就必须是面板1所描述的镜头画面（全屏呈现），绝对不要在视频开头或任何时刻展示九宫格分镜板原图！参考图仅用于理解镜头规划，不能出现在视频画面中
-- 关键：不要让9个格子各自独立运动！而是按面板1→9的顺序依次切换不同的镜头视角，形成流畅的蒙太奇剪辑效果
+- 【最高优先级】视频的第一帧就是面板1所描述的镜头画面，全屏呈现，就像电影开场的第一个镜头。重申：绝对不要在视频开头展示九宫格分镜板原图、缩略图集、或任何网格形式的画面！
+- 【高优先级】不要让9个格子各自独立运动！这不是一个九宫格动画。而是按面板1→9的顺序依次切换不同的镜头视角，形成流畅的蒙太奇剪辑效果
 - 镜头切换：每个面板视角停留约{secondsPerPanel}秒，通过自然的镜头运动（推拉摇移、切换）过渡到下一个视角
 - 整体镜头运动：{cameraMovement}
 - 运动：确保镜头切换流畅自然，保持叙事连贯性
@@ -85,17 +93,25 @@ Technical Requirements:
 - 视觉风格：电影质感，全程保持一致的光照和色调
 - 语言：配音和字幕使用中文`,
 
-    english: `The provided reference image is a 3x3 storyboard grid containing 9 different camera angles of the same scene. It is ONLY for shot planning reference — do NOT display the storyboard grid image itself in the video.
-The video MUST begin directly with the full-screen shot described in Panel 1, then transition through each panel's camera angle in order (Panel 1 through 9, left to right, top to bottom).
+    english: `⚠️ HIGHEST PRIORITY INSTRUCTION ⚠️: The provided reference image is a 3x3 storyboard grid used ONLY as shot-planning metadata. It is ABSOLUTELY FORBIDDEN to display this grid image anywhere in the video. The very first frame MUST be the actual full-screen scene described in Panel 1 — NOT the grid, NOT a thumbnail, NOT the storyboard, but the ACTUAL SCENE from Panel 1.
+
+⛔ ABSOLUTE PROHIBITIONS (violating ANY of these means FAILURE):
+1. DO NOT show the nine-grid storyboard image in the first frame, last frame, or ANY frame of the video
+2. DO NOT show any image containing grid lines, dividers, or multi-panel storyboard-style layouts in the video
+3. DO NOT use the reference image as an opening shot, transition, or background in the video
+4. DO NOT display any thumbnail collection, image collage, or side-by-side multi-frame composition
+
+✅ CORRECT APPROACH:
+The video MUST begin directly with the full-screen scene described in Panel 1 (like the opening shot of a real film), then transition through each panel's camera angle in order (Panel 1 through 9, left to right, top to bottom).
 
 Action Description: {actionSummary}
 
-Storyboard Panel Breakdown:
+Storyboard Panel Breakdown (for shot planning reference ONLY — do NOT display this breakdown visually in the video):
 {panelDescriptions}
 
 Technical Requirements:
-- MOST CRITICAL: The very first frame of the video MUST be the full-screen shot described in Panel 1. NEVER show the nine-grid storyboard image at the beginning or at any point in the video! The reference image is ONLY for understanding the shot plan, it must NOT appear in the video output
-- CRITICAL: This is a STORYBOARD reference - do NOT animate each grid cell independently! Instead, transition through the camera angles of panels 1→9 sequentially, creating a smooth montage-style edit
+- [HIGHEST PRIORITY] The very first frame of the video MUST be the full-screen shot described in Panel 1, like the opening shot of a cinematic film. REITERATE: ABSOLUTELY DO NOT show the nine-grid storyboard image, thumbnail collection, or ANY grid-style composition at the beginning or anywhere in the video!
+- [HIGH PRIORITY] This is a STORYBOARD reference — do NOT animate each grid cell independently! This is NOT a grid animation. Instead, transition through the camera angles of panels 1→9 sequentially, creating a smooth montage-style edit
 - Shot Pacing: Each panel's angle should last approximately {secondsPerPanel} seconds, with natural camera movements (pan, tilt, dolly, cut) transitioning to the next angle
 - Overall Camera Movement: {cameraMovement}
 - Motion: Ensure smooth and natural shot transitions, maintaining narrative continuity
