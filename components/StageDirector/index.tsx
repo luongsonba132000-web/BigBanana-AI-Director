@@ -76,7 +76,8 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
     const hasStuckGenerating = project.shots.some(shot => {
       const stuckKeyframes = shot.keyframes?.some(kf => kf.status === 'generating' && !kf.imageUrl);
       const stuckVideo = shot.interval?.status === 'generating' && !shot.interval?.videoUrl;
-      return stuckKeyframes || stuckVideo;
+      const stuckNineGrid = shot.nineGrid?.status === 'generating' && !shot.nineGrid?.imageUrl;
+      return stuckKeyframes || stuckVideo || stuckNineGrid;
     });
 
     if (hasStuckGenerating) {
@@ -92,7 +93,10 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
           ),
           interval: shot.interval && shot.interval.status === 'generating' && !shot.interval.videoUrl
             ? { ...shot.interval, status: 'failed' as const }
-            : shot.interval
+            : shot.interval,
+          nineGrid: shot.nineGrid && shot.nineGrid.status === 'generating' && !shot.nineGrid.imageUrl
+            ? { ...shot.nineGrid, status: 'failed' as const }
+            : shot.nineGrid
         }))
       }));
     }
