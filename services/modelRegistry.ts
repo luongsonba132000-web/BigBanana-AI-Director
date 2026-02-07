@@ -126,23 +126,38 @@ export const loadRegistry = (): ModelRegistryState => {
         return { ...m, apiModel: m.id };
       });
 
-      // 清理旧的 Veo 内置模型
+      // 清理旧的已废弃视频模型
+      const modelCountBefore = parsed.models.length;
       parsed.models = parsed.models.filter(
         m => !(m.type === 'video' && deprecatedVideoModelIds.includes(m.id))
       );
+      const modelsRemoved = modelCountBefore - parsed.models.length;
 
       // 迁移激活视频模型
+      let activeModelMigrated = false;
       if (
         deprecatedVideoModelIds.includes(parsed.activeModels.video) ||
         parsed.activeModels.video?.startsWith('veo_3_1')
       ) {
         parsed.activeModels.video = 'veo';
+        activeModelMigrated = true;
       }
       
       // 同步全局 API Key
       parsed.globalApiKey = localStorage.getItem(API_KEY_STORAGE_KEY) || parsed.globalApiKey;
       
       registryState = parsed;
+
+      // 如果发生了迁移，立即回写 localStorage，避免每次加载都重复执行
+      if (modelsRemoved > 0 || activeModelMigrated) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+          console.log(`🔄 模型注册中心迁移完成：清理 ${modelsRemoved} 个废弃模型`);
+        } catch (e) {
+          // 回写失败不影响运行，下次加载仍会重新迁移
+        }
+      }
+
       return parsed;
     }
   } catch (e) {

@@ -170,12 +170,22 @@ export const loadProjectFromDB = async (id: string): Promise<ProjectState> => {
           project.renderLogs = [];
         }
         // Migration: veo-r2v 模型已下线，迁移为 veo
+        let migrated = false;
         if (project.shots) {
           project.shots.forEach((shot: any) => {
             if (shot.videoModel === 'veo-r2v') {
               shot.videoModel = 'veo';
+              migrated = true;
             }
           });
+        }
+        // 如果发生了迁移，异步回写 IndexedDB，避免每次加载都重复执行
+        if (migrated) {
+          openDB().then(writeDb => {
+            const writeTx = writeDb.transaction(STORE_NAME, 'readwrite');
+            writeTx.objectStore(STORE_NAME).put(project);
+            console.log(`🔄 项目 "${project.title}" 已迁移废弃的视频模型`);
+          }).catch(() => { /* 回写失败不影响运行 */ });
         }
         resolve(project);
       }

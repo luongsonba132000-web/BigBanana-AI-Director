@@ -80,6 +80,8 @@ export const loadModelConfig = (): ModelManagerState => {
         parsed.currentConfig.videoModel.modelName = 'veo';
         parsed.currentConfig.videoModel.type = 'veo';
         parsed.currentConfig.videoModel.endpoint = '/v1/chat/completions';
+        // 迁移后立即回写，避免重复执行
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)); } catch (e) { /* ignore */ }
       }
       runtimeState = parsed;
       return parsed;

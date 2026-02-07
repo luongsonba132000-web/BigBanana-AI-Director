@@ -31,15 +31,9 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({
   const videoModels = getVideoModels().filter(m => m.isEnabled);
   const defaultModel = getActiveVideoModel();
   
-  // 迁移旧模型名：veo-r2v / veo_3_0_r2v_* 已下线，回退到 veo
-  const migrateModelId = (id?: string): string | undefined => {
-    if (id === 'veo-r2v' || id?.startsWith('veo_3_0_r2v')) return 'veo';
-    return id;
-  };
-
-  // 状态
+  // 状态（废弃模型已在数据加载层迁移，此处无需额外处理）
   const [selectedModelId, setSelectedModelId] = useState<string>(
-    migrateModelId(shot.videoModel) || defaultModel?.id || videoModels[0]?.id || 'sora-2'
+    shot.videoModel || defaultModel?.id || videoModels[0]?.id || 'sora-2'
   );
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>(() => getDefaultAspectRatio());
   const [duration, setDuration] = useState<VideoDuration>(() => getDefaultVideoDuration());
