@@ -300,11 +300,11 @@ export const BUILTIN_CHAT_MODELS: ChatModelDefinition[] = [
 export const BUILTIN_IMAGE_MODELS: ImageModelDefinition[] = [
   {
     id: 'gemini-3-pro-image-preview',
-    name: 'Gemini 3 Pro Image',
+    name: 'Gemini 3 Pro Image(Nano Banana Pro)',
     type: 'image',
     providerId: 'antsk',
     endpoint: '/v1beta/models/gemini-3-pro-image-preview:generateContent',
-    description: 'Google Gemini 图片生成模型',
+    description: 'Google Nano Banana Pro 图片生成模型',
     isBuiltIn: true,
     isEnabled: true,
     params: { ...DEFAULT_IMAGE_PARAMS },
