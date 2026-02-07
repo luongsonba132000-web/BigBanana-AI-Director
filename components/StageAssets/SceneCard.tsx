@@ -115,7 +115,7 @@ const SceneCard: React.FC<SceneCardProps> = ({
       </div>
       
       <div className="p-3 border-t border-[var(--border-primary)] bg-[var(--bg-base)]">
-        <div className="flex justify-between items-center mb-1">
+        <div className="flex justify-between items-center mb-1 gap-2">
           {isEditingLocation ? (
             <input
               type="text"
@@ -124,11 +124,11 @@ const SceneCard: React.FC<SceneCardProps> = ({
               onBlur={handleSaveLocation}
               onKeyPress={(e) => e.key === 'Enter' && handleSaveLocation()}
               autoFocus
-              className="font-bold text-[var(--text-secondary)] text-sm bg-[var(--bg-hover)] border border-[var(--border-secondary)] rounded px-2 py-1 flex-1 mr-2 focus:outline-none focus:border-[var(--accent)]"
+              className="font-bold text-[var(--text-secondary)] text-sm bg-[var(--bg-hover)] border border-[var(--border-secondary)] rounded px-2 py-1 flex-1 min-w-0 focus:outline-none focus:border-[var(--accent)]"
             />
           ) : (
-            <div className="flex items-center gap-2 flex-1 group/location">
-              <h3 className="font-bold text-[var(--text-secondary)] text-sm truncate">{scene.location}</h3>
+            <div className="flex items-center gap-2 flex-1 min-w-0 group/location">
+              <h3 className="font-bold text-[var(--text-secondary)] text-sm truncate" title={scene.location}>{scene.location}</h3>
               <button
                 onClick={() => {
                   setEditLocation(scene.location);
@@ -148,7 +148,7 @@ const SceneCard: React.FC<SceneCardProps> = ({
               onBlur={handleSaveTime}
               onKeyPress={(e) => e.key === 'Enter' && handleSaveTime()}
               autoFocus
-              className="px-1.5 py-0.5 bg-[var(--bg-hover)] border border-[var(--border-secondary)] text-[var(--text-secondary)] text-[9px] rounded uppercase font-mono focus:outline-none focus:border-[var(--accent)] w-24"
+              className="px-1.5 py-0.5 bg-[var(--bg-hover)] border border-[var(--border-secondary)] text-[var(--text-secondary)] text-[9px] rounded uppercase font-mono focus:outline-none focus:border-[var(--accent)] w-24 shrink-0"
             />
           ) : (
             <span
@@ -156,7 +156,8 @@ const SceneCard: React.FC<SceneCardProps> = ({
                 setEditTime(scene.time);
                 setIsEditingTime(true);
               }}
-              className="px-1.5 py-0.5 bg-[var(--bg-elevated)] text-[var(--text-tertiary)] text-[9px] rounded border border-[var(--border-primary)] uppercase font-mono cursor-pointer hover:bg-[var(--bg-hover)] hover:text-[var(--text-secondary)] transition-colors"
+              className="px-1.5 py-0.5 bg-[var(--bg-elevated)] text-[var(--text-tertiary)] text-[9px] rounded border border-[var(--border-primary)] uppercase font-mono cursor-pointer hover:bg-[var(--bg-hover)] hover:text-[var(--text-secondary)] transition-colors shrink-0 whitespace-nowrap overflow-hidden max-w-[80px] text-center"
+              title={scene.time}
             >
               {scene.time}
             </span>
