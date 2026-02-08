@@ -118,6 +118,38 @@ export interface Shot {
   nineGrid?: NineGridData; // 可选的九宫格分镜预览数据（高级功能）
 }
 
+/**
+ * 全局美术指导文档 - 用于统一所有角色和场景的视觉风格
+ * 在生成任何角色/场景提示词之前，先由 AI 根据剧本内容生成此文档，
+ * 后续所有视觉提示词生成都以此为约束，确保风格一致性。
+ */
+export interface ArtDirection {
+  /** 全局色彩方案 */
+  colorPalette: {
+    primary: string;      // 主色调描述
+    secondary: string;    // 辅色调
+    accent: string;       // 点缀色
+    skinTones: string;    // 肤色范围描述
+    saturation: string;   // 整体饱和度倾向
+    temperature: string;  // 整体色温倾向
+  };
+  /** 角色设计统一规则 */
+  characterDesignRules: {
+    proportions: string;   // 头身比、体型风格
+    eyeStyle: string;      // 眼睛画法统一
+    lineWeight: string;    // 线条粗细风格
+    detailLevel: string;   // 细节密度级别
+  };
+  /** 统一光影处理方式 */
+  lightingStyle: string;
+  /** 材质/质感风格 */
+  textureStyle: string;
+  /** 3-5个核心风格关键词 */
+  moodKeywords: string[];
+  /** 一段统一风格的文字锚点描述，所有提示词生成时注入 */
+  consistencyAnchors: string;
+}
+
 export interface ScriptData {
   title: string;
   genre: string;
@@ -126,6 +158,7 @@ export interface ScriptData {
   language?: string;
   visualStyle?: string; // Visual style: live-action, anime, 3d-animation, etc.
   shotGenerationModel?: string; // Model used for shot generation
+  artDirection?: ArtDirection; // 全局美术指导文档，用于统一角色和场景的视觉风格
   characters: Character[];
   scenes: Scene[];
   props: Prop[]; // 道具列表，用于保持多分镜间物品视觉一致性
