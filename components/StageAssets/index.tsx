@@ -1082,10 +1082,22 @@ const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError, o
   };
 
   /**
-   * 重新生成九宫格造型
+   * 重新生成九宫格造型（文案+图片全部重来）
    */
   const handleRegenerateTurnaround = (charId: string) => {
     handleGenerateTurnaroundPanels(charId);
+  };
+
+  /**
+   * 仅重新生成九宫格造型图片（保留已有的视角描述文案）
+   * 当用户对文案满意但图片效果不好时使用
+   */
+  const handleRegenerateTurnaroundImage = (charId: string) => {
+    const char = project.scriptData?.characters.find(c => compareIds(c.id, charId));
+    if (!char || !char.turnaround?.panels || char.turnaround.panels.length !== 9) return;
+    
+    // 直接使用已有的面板描述重新生成图片
+    handleConfirmTurnaroundPanels(charId, char.turnaround.panels);
   };
 
   // 空状态
@@ -1167,6 +1179,7 @@ const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError, o
             onConfirmPanels={handleConfirmTurnaroundPanels}
             onUpdatePanel={handleUpdateTurnaroundPanel}
             onRegenerate={handleRegenerateTurnaround}
+            onRegenerateImage={handleRegenerateTurnaroundImage}
             onImageClick={setPreviewImage}
           />
         ) : null;

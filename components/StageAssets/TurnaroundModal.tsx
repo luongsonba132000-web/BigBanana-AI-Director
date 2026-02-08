@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, RefreshCw, Grid3x3, AlertCircle, Edit2, Save, ArrowRight, Wand2 } from 'lucide-react';
+import { X, Loader2, RefreshCw, Grid3x3, AlertCircle, Edit2, Save, ArrowRight, Wand2, ImagePlus } from 'lucide-react';
 import { Character, CharacterTurnaroundPanel } from '../../types';
 import { CHARACTER_TURNAROUND_LAYOUT } from '../../services/aiService';
 
@@ -10,6 +10,7 @@ interface TurnaroundModalProps {
   onConfirmPanels: (charId: string, panels: CharacterTurnaroundPanel[]) => void;
   onUpdatePanel: (charId: string, index: number, panel: Partial<CharacterTurnaroundPanel>) => void;
   onRegenerate: (charId: string) => void;
+  onRegenerateImage: (charId: string) => void; // 仅重新生成图片（保留已有的视角描述）
   onImageClick: (imageUrl: string) => void;
 }
 
@@ -20,6 +21,7 @@ const TurnaroundModal: React.FC<TurnaroundModalProps> = ({
   onConfirmPanels,
   onUpdatePanel,
   onRegenerate,
+  onRegenerateImage,
   onImageClick,
 }) => {
   const turnaround = character.turnaround;
@@ -102,14 +104,24 @@ const TurnaroundModal: React.FC<TurnaroundModalProps> = ({
             )}
           </div>
           <div className="flex items-center gap-2">
+            {isCompleted && (
+              <button
+                onClick={() => onRegenerateImage(character.id)}
+                className="px-3 py-1.5 bg-[var(--accent-bg)] hover:bg-[var(--accent-hover-bg)] text-[var(--accent-text)] border border-[var(--accent-border)] rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5"
+                title="保留视角描述，仅重新生成九宫格图片"
+              >
+                <ImagePlus className="w-3 h-3" />
+                重新生成图片
+              </button>
+            )}
             {(isCompleted || isPanelsReady) && (
               <button
                 onClick={() => onRegenerate(character.id)}
                 className="px-3 py-1.5 bg-[var(--bg-hover)] hover:bg-[var(--border-secondary)] text-[var(--text-secondary)] rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5"
-                title="重新生成视角描述"
+                title="重新生成视角描述和图片"
               >
                 <RefreshCw className="w-3 h-3" />
-                重新生成
+                重新生成描述
               </button>
             )}
             <button
@@ -417,11 +429,20 @@ const TurnaroundModal: React.FC<TurnaroundModalProps> = ({
               {/* 底部操作按钮 */}
               <div className="flex justify-center gap-3 pt-2">
                 <button
+                  onClick={() => onRegenerateImage(character.id)}
+                  className="px-4 py-2 bg-[var(--accent-bg)] hover:bg-[var(--accent-hover-bg)] text-[var(--accent-text)] border border-[var(--accent-border)] rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5"
+                  title="保留视角描述，仅重新生成图片"
+                >
+                  <ImagePlus className="w-3 h-3" />
+                  重新生成图片
+                </button>
+                <button
                   onClick={() => onRegenerate(character.id)}
                   className="px-4 py-2 bg-[var(--bg-hover)] hover:bg-[var(--border-secondary)] text-[var(--text-secondary)] rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 border border-[var(--border-primary)]"
+                  title="重新生成视角描述和图片"
                 >
                   <RefreshCw className="w-3 h-3" />
-                  重新生成
+                  重新生成描述
                 </button>
               </div>
             </div>

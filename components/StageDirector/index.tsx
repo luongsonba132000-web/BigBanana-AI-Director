@@ -885,6 +885,17 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
   };
 
   /**
+   * 九宫格分镜预览 - 仅重新生成图片（保留已有的面板描述文案）
+   * 当用户对文案满意但图片效果不好时使用
+   */
+  const handleRegenerateNineGridImage = async () => {
+    if (!activeShot || !activeShot.nineGrid?.panels || activeShot.nineGrid.panels.length !== 9) return;
+    
+    // 直接使用已有的面板描述重新生成图片
+    handleConfirmNineGridPanels(activeShot.nineGrid.panels);
+  };
+
+  /**
    * 九宫格分镜预览 - 更新单个面板描述（用户在弹窗中编辑）
    */
   const handleUpdateNineGridPanel = (index: number, updatedPanel: Partial<NineGridPanel>) => {
@@ -1162,6 +1173,7 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
           onSelectPanel={handleSelectNineGridPanel}
           onUseWholeImage={handleUseWholeNineGridAsFrame}
           onRegenerate={() => handleGenerateNineGrid(activeShot)}
+          onRegenerateImage={handleRegenerateNineGridImage}
           onConfirmPanels={handleConfirmNineGridPanels}
           onUpdatePanel={handleUpdateNineGridPanel}
           aspectRatio={keyframeAspectRatio}
