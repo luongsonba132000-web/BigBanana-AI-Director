@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image as ImageIcon, Video } from 'lucide-react';
+import { Image as ImageIcon, Video, Trash2 } from 'lucide-react';
 import { Shot } from '../../types';
 
 interface ShotCardProps {
@@ -7,9 +7,10 @@ interface ShotCardProps {
   index: number;
   isActive: boolean;
   onClick: () => void;
+  onDelete?: (shotId: string) => void;
 }
 
-const ShotCard: React.FC<ShotCardProps> = ({ shot, index, isActive, onClick }) => {
+const ShotCard: React.FC<ShotCardProps> = ({ shot, index, isActive, onClick, onDelete }) => {
   const sKf = shot.keyframes?.find(k => k.type === 'start');
   const hasImage = !!sKf?.imageUrl;
   const hasVideo = !!shot.interval?.videoUrl;
@@ -43,9 +44,23 @@ const ShotCard: React.FC<ShotCardProps> = ({ shot, index, isActive, onClick }) =
         <span className={`font-mono text-[10px] font-bold ${isActive ? 'text-[var(--accent-text)]' : 'text-[var(--text-tertiary)]'}`}>
           {getShotDisplayNumber()}
         </span>
-        <span className="text-[9px] px-1.5 py-0.5 bg-[var(--bg-hover)] text-[var(--text-tertiary)] rounded uppercase">
-          {shot.cameraMovement}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] px-1.5 py-0.5 bg-[var(--bg-hover)] text-[var(--text-tertiary)] rounded uppercase">
+            {shot.cameraMovement}
+          </span>
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(shot.id);
+              }}
+              className="p-1 rounded-md text-[var(--text-muted)] hover:text-[var(--error)] hover:bg-[var(--error)]/10 transition-all opacity-0 group-hover:opacity-100"
+              title="删除分镜"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Thumbnail */}

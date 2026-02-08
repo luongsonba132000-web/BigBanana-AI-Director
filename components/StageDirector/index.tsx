@@ -113,6 +113,33 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
   };
 
   /**
+   * 删除分镜
+   */
+  const handleDeleteShot = (shotId: string) => {
+    const shot = project.shots.find(s => s.id === shotId);
+    if (!shot) return;
+
+    const shotIndex = project.shots.findIndex(s => s.id === shotId);
+    const displayName = `SHOT ${String(shotIndex + 1).padStart(3, '0')}`;
+
+    showAlert(`确定要删除 ${displayName} 吗？此操作不可撤销。`, {
+      type: 'warning',
+      showCancel: true,
+      onConfirm: () => {
+        // 如果当前选中的就是被删除的分镜，则关闭工作台
+        if (activeShotId === shotId) {
+          setActiveShotId(null);
+        }
+        updateProject((prevProject: ProjectState) => ({
+          ...prevProject,
+          shots: prevProject.shots.filter(s => s.id !== shotId)
+        }));
+        showAlert(`${displayName} 已删除`, { type: 'success' });
+      }
+    });
+  };
+
+  /**
    * 生成关键帧
    */
   const handleGenerateKeyframe = async (shot: Shot, type: 'start' | 'end') => {
@@ -925,6 +952,7 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
                 index={idx}
                 isActive={activeShotId === shot.id}
                 onClick={() => setActiveShotId(shot.id)}
+                onDelete={handleDeleteShot}
               />
             ))}
           </div>
