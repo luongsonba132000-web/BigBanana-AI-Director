@@ -34,9 +34,10 @@ interface Props {
   project: ProjectState;
   updateProject: (updates: Partial<ProjectState> | ((prev: ProjectState) => ProjectState)) => void;
   onApiKeyError?: (error: any) => boolean;
+  onGeneratingChange?: (isGenerating: boolean) => void;
 }
 
-const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError }) => {
+const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError, onGeneratingChange }) => {
   const { showAlert } = useAlert();
   const [activeShotId, setActiveShotId] = useState<string | null>(null);
   const [batchProgress, setBatchProgress] = useState<{current: number, total: number, message: string} | null>(null);
@@ -102,6 +103,32 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
       }));
     }
   }, [project.id]); // 仅在项目ID变化时运行，避免重复执行
+
+  /**
+   * 上报生成状态给父组件，用于导航锁定
+   * 检测所有可能的生成中状态：批量生成、单个关键帧、视频、九宫格、镜头拆分
+   */
+  useEffect(() => {
+    const hasGeneratingKeyframes = project.shots.some(shot => 
+      shot.keyframes?.some(kf => kf.status === 'generating')
+    );
+    const hasGeneratingVideo = project.shots.some(shot => 
+      shot.interval?.status === 'generating'
+    );
+    const hasGeneratingNineGrid = project.shots.some(shot => 
+      shot.nineGrid?.status === 'generating_panels' || shot.nineGrid?.status === 'generating_image'
+    );
+    
+    const generating = !!batchProgress || hasGeneratingKeyframes || hasGeneratingVideo || hasGeneratingNineGrid || isSplittingShot;
+    onGeneratingChange?.(generating);
+  }, [batchProgress, project.shots, isSplittingShot]);
+
+  // 组件卸载时重置生成状态
+  useEffect(() => {
+    return () => {
+      onGeneratingChange?.(false);
+    };
+  }, []);
 
   /**
    * 更新镜头

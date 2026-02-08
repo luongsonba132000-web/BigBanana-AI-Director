@@ -27,9 +27,10 @@ interface Props {
   project: ProjectState;
   updateProject: (updates: Partial<ProjectState> | ((prev: ProjectState) => ProjectState)) => void;
   onApiKeyError?: (error: any) => boolean;
+  onGeneratingChange?: (isGenerating: boolean) => void;
 }
 
-const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError }) => {
+const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError, onGeneratingChange }) => {
   const { showAlert } = useAlert();
   const [batchProgress, setBatchProgress] = useState<{current: number, total: number} | null>(null);
   const [selectedCharId, setSelectedCharId] = useState<string | null>(null);
@@ -111,6 +112,36 @@ const StageAssets: React.FC<Props> = ({ project, updateProject, onApiKeyError })
       updateProject({ scriptData: newData });
     }
   }, [project.id]); // 仅在项目ID变化时运行，避免重复执行
+
+  /**
+   * 上报生成状态给父组件，用于导航锁定
+   * 检测角色、场景、道具、角色变体的生成状态
+   */
+  useEffect(() => {
+    const hasGeneratingCharacters = project.scriptData?.characters.some(char => {
+      const isCharGenerating = char.status === 'generating';
+      const hasGeneratingVariations = char.variations?.some(v => v.status === 'generating');
+      return isCharGenerating || hasGeneratingVariations;
+    }) ?? false;
+
+    const hasGeneratingScenes = project.scriptData?.scenes.some(scene => 
+      scene.status === 'generating'
+    ) ?? false;
+
+    const hasGeneratingProps = (project.scriptData?.props || []).some(prop =>
+      prop.status === 'generating'
+    );
+
+    const generating = !!batchProgress || hasGeneratingCharacters || hasGeneratingScenes || hasGeneratingProps;
+    onGeneratingChange?.(generating);
+  }, [batchProgress, project.scriptData]);
+
+  // 组件卸载时重置生成状态
+  useEffect(() => {
+    return () => {
+      onGeneratingChange?.(false);
+    };
+  }, []);
 
   const refreshLibrary = async () => {
     setLibraryLoading(true);
