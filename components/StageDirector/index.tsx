@@ -206,9 +206,9 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
     }
     
     try {
-      const referenceImages = getRefImagesForShot(shot, project.scriptData);
-      // 使用当前设置的横竖屏比例生成关键帧
-      const url = await generateImage(prompt, referenceImages, keyframeAspectRatio);
+      const refResult = getRefImagesForShot(shot, project.scriptData);
+      // 使用当前设置的横竖屏比例生成关键帧，传递 hasTurnaround 标记
+      const url = await generateImage(prompt, refResult.images, keyframeAspectRatio, false, refResult.hasTurnaround);
 
       updateProject((prevProject: ProjectState) => ({
         ...prevProject,
@@ -851,10 +851,10 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
     
     try {
       // 2. 收集参考图片
-      const referenceImages = getRefImagesForShot(activeShot, project.scriptData);
+      const refResult = getRefImagesForShot(activeShot, project.scriptData);
       
       // 3. 生成九宫格图片
-      const imageUrl = await generateNineGridImage(confirmedPanels, referenceImages, visualStyle, keyframeAspectRatio);
+      const imageUrl = await generateNineGridImage(confirmedPanels, refResult.images, visualStyle, keyframeAspectRatio);
       
       // 4. 更新状态为完成
       updateShot(activeShot.id, (s) => ({
