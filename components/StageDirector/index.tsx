@@ -650,6 +650,22 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError 
   const handleSplitShot = async (shot: Shot) => {
     if (!shot) return;
     
+    // 弹出确认提示，告知用户拆分的含义
+    showAlert(
+      'AI拆分镜头会将当前镜头按不同景别与视角拆分为多个子镜头，原镜头将被替换为拆分后的子镜头序列。此操作不可撤销，建议在拆分前确认镜头内容已编辑完成。\n\n确定要继续拆分吗？',
+      {
+        title: 'AI拆分镜头',
+        type: 'warning',
+        showCancel: true,
+        confirmText: '确认拆分',
+        cancelText: '取消',
+        onConfirm: () => executeSplitShot(shot),
+      }
+    );
+  };
+
+  /** 执行AI拆分镜头的实际逻辑 */
+  const executeSplitShot = async (shot: Shot) => {
     // 1. 获取场景信息
     const scene = project.scriptData?.scenes.find(s => String(s.id) === String(shot.sceneId));
     if (!scene) {
