@@ -124,6 +124,7 @@ const generateVideoAsync = async (
   const startTime = Date.now();
 
   let videoId: string | null = null;
+  let videoUrlFromStatus: string | null = null;
 
   while (Date.now() - startTime < maxPollingTime) {
     await new Promise(resolve => setTimeout(resolve, pollingInterval));
@@ -147,6 +148,7 @@ const generateVideoAsync = async (
     console.log(`🔄 ${resolvedModelName} 任务状态:`, status, '进度:', statusData.progress);
 
     if (status === 'completed' || status === 'succeeded') {
+      videoUrlFromStatus = statusData.video_url || statusData.videoUrl || null;
       if (statusData.id && statusData.id.startsWith('video_')) {
         videoId = statusData.id;
       } else {
@@ -167,11 +169,17 @@ const generateVideoAsync = async (
     }
   }
 
-  if (!videoId) {
+  if (!videoId && !videoUrlFromStatus) {
     throw new Error('视频生成超时 (20分钟) 或未返回视频ID');
   }
 
   console.log(`✅ ${resolvedModelName} 视频生成完成，视频ID:`, videoId);
+
+  if (videoUrlFromStatus) {
+    const videoBase64 = await convertVideoUrlToBase64(videoUrlFromStatus);
+    console.log(`✅ ${resolvedModelName} 视频已转换为base64格式`);
+    return videoBase64;
+  }
 
   // Step 3: 下载视频内容
   const maxDownloadRetries = 5;

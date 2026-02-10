@@ -65,6 +65,27 @@ const resizeImageToSize = async (base64Data: string, targetWidth: number, target
   });
 };
 
+const convertVideoUrlToBase64 = async (videoUrl: string): Promise<string> => {
+  const response = await fetch(videoUrl);
+  if (!response.ok) {
+    throw new Error(`视频下载失败: ${response.status}`);
+  }
+  const videoBlob = await response.blob();
+  const reader = new FileReader();
+  return new Promise((resolve, reject) => {
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      if (result && result.startsWith('data:')) {
+        resolve(result);
+      } else {
+        reject(new Error('视频转换失败'));
+      }
+    };
+    reader.onerror = () => reject(new Error('视频读取失败'));
+    reader.readAsDataURL(videoBlob);
+  });
+};
+
 /**
  * 根据宽高比获取尺寸
  */
@@ -312,6 +333,7 @@ const callSoraApi = async (
   const startTime = Date.now();
   
   let videoId: string | null = null;
+  let videoUrlFromStatus: string | null = null;
 
   while (Date.now() - startTime < maxPollingTime) {
     await new Promise(resolve => setTimeout(resolve, pollingInterval));
@@ -335,6 +357,7 @@ const callSoraApi = async (
     console.log('🔄 Sora-2 任务状态:', status, '进度:', statusData.progress);
 
     if (status === 'completed' || status === 'succeeded') {
+      videoUrlFromStatus = statusData.video_url || statusData.videoUrl || null;
       if (statusData.id && statusData.id.startsWith('video_')) {
         videoId = statusData.id;
       } else {
@@ -350,8 +373,14 @@ const callSoraApi = async (
     }
   }
 
-  if (!videoId) {
+  if (!videoId && !videoUrlFromStatus) {
     throw new Error('视频生成超时 (20分钟) 或未返回视频 ID');
+  }
+
+  if (videoUrlFromStatus) {
+    const videoBase64 = await convertVideoUrlToBase64(videoUrlFromStatus);
+    console.log('✅ 视频下载完成并转换为 base64');
+    return videoBase64;
   }
 
   // 下载视频
