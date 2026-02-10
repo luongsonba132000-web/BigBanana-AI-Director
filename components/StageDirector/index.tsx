@@ -28,7 +28,7 @@ import ImagePreviewModal from './ImagePreviewModal';
 import NineGridPreview from './NineGridPreview';
 import { useAlert } from '../GlobalAlert';
 import { AspectRatioSelector } from '../AspectRatioSelector';
-import { getUserAspectRatio, setUserAspectRatio } from '../../services/modelRegistry';
+import { getUserAspectRatio, setUserAspectRatio, getModelById } from '../../services/modelRegistry';
 
 interface Props {
   project: ProjectState;
@@ -46,6 +46,7 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
   const [useAIEnhancement, setUseAIEnhancement] = useState(false); // 是否使用AI增强提示词
   const [isSplittingShot, setIsSplittingShot] = useState(false); // 是否正在拆分镜头
   const [showNineGrid, setShowNineGrid] = useState(false); // 是否显示九宫格预览弹窗
+  const [toastMessage, setToastMessage] = useState('');
   
   // 关键帧生成使用的横竖屏比例（从持久化配置读取）
   const [keyframeAspectRatio, setKeyframeAspectRatioState] = useState<AspectRatio>(() => getUserAspectRatio());
@@ -129,6 +130,12 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
       onGeneratingChange?.(false);
     };
   }, []);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timerId = setTimeout(() => setToastMessage(''), 1500);
+    return () => clearTimeout(timerId);
+  }, [toastMessage]);
 
   /**
    * 更新镜头
@@ -1016,6 +1023,12 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
         </div>
       )}
 
+      {toastMessage && (
+        <div className="fixed left-1/2 top-1/3 z-[9999] w-full max-w-md -translate-x-1/2 rounded-xl border border-[var(--border-secondary)] bg-black/80 px-4 py-3 shadow-2xl backdrop-blur">
+          <div className="text-xs text-white whitespace-pre-line">{toastMessage}</div>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="h-16 border-b border-[var(--border-primary)] bg-[var(--bg-elevated)] px-6 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
@@ -1132,10 +1145,18 @@ const StageDirector: React.FC<Props> = ({ project, updateProject, onApiKeyError,
             useAIEnhancement={useAIEnhancement}
             onToggleAIEnhancement={() => setUseAIEnhancement(!useAIEnhancement)}
             onGenerateVideo={(aspectRatio, duration, modelId) => handleGenerateVideo(activeShot, aspectRatio, duration, modelId)}
-            onVideoModelChange={(modelId) => updateShot(activeShot.id, s => ({
-              ...s,
-              videoModel: modelId as any
-            }))}
+            onVideoModelChange={(modelId) => {
+              const model = getModelById(modelId);
+              const lines = [
+                `已切换视频模型：${model?.name || modelId}`,
+                model?.description
+              ].filter(Boolean);
+              setToastMessage(lines.join('\n'));
+              updateShot(activeShot.id, s => ({
+                ...s,
+                videoModel: modelId as any
+              }));
+            }}
             onEditVideoPrompt={() => {
               // 如果videoPrompt不存在，动态生成一个
               let promptValue = activeShot.interval?.videoPrompt;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, X, Film, Edit2, MessageSquare, Sparkles, Loader2, Scissors, Grid3x3 } from 'lucide-react';
 import { Shot, Character, Scene, Prop, ProjectState, AspectRatio, VideoDuration, NineGridData, NineGridPanel } from '../../types';
 import SceneContext from './SceneContext';
@@ -93,7 +93,13 @@ const ShotWorkbench: React.FC<ShotWorkbenchProps> = ({
   
   const startKf = shot.keyframes?.find(k => k.type === 'start');
   const endKf = shot.keyframes?.find(k => k.type === 'end');
-  const normalizedModelId = currentVideoModelId.trim().toLowerCase();
+  const [localVideoModelId, setLocalVideoModelId] = useState(currentVideoModelId);
+
+  useEffect(() => {
+    setLocalVideoModelId(currentVideoModelId);
+  }, [currentVideoModelId]);
+
+  const normalizedModelId = localVideoModelId.trim().toLowerCase();
   const showEndFrame = normalizedModelId.startsWith('veo');
   
   // 从shot.id中提取显示编号
@@ -174,7 +180,7 @@ const ShotWorkbench: React.FC<ShotWorkbenchProps> = ({
         )}
 
         {/* Nine Grid Storyboard Preview - Advanced Feature (不在 veo 首尾帧模式下显示) */}
-        {currentVideoModelId !== 'veo' && (
+        {localVideoModelId !== 'veo' && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <button
@@ -333,7 +339,10 @@ const ShotWorkbench: React.FC<ShotWorkbenchProps> = ({
           hasEndFrame={!!endKf?.imageUrl}
           onGenerate={onGenerateVideo}
           onEditPrompt={onEditVideoPrompt}
-          onModelChange={onVideoModelChange}
+          onModelChange={(modelId) => {
+            setLocalVideoModelId(modelId);
+            onVideoModelChange(modelId);
+          }}
         />
       </div>
     </div>
