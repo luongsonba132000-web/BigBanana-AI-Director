@@ -228,6 +228,7 @@ const callSoraApi = async (
   const aspectRatio = options.aspectRatio || model.params.defaultAspectRatio;
   const duration = options.duration || model.params.defaultDuration;
   const apiModel = model.apiModel || model.id;
+  const supportsReferenceArray = apiModel === 'veo_3_1-fast';
   
   const { width, height, size } = getSizeFromAspectRatio(aspectRatio);
 
@@ -240,11 +241,9 @@ const callSoraApi = async (
   formData.append('seconds', String(duration));
   formData.append('size', size);
 
-  // 添加参考图片
-  if (options.startImage) {
-    const cleanBase64 = options.startImage.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
+  const appendReference = async (base64: string, filename: string, fieldName: string) => {
+    const cleanBase64 = base64.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
     const resizedBase64 = await resizeImageToSize(cleanBase64, width, height);
-    
     const byteCharacters = atob(resizedBase64);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -252,7 +251,19 @@ const callSoraApi = async (
     }
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: 'image/png' });
-    formData.append('input_reference', blob, 'reference.png');
+    formData.append(fieldName, blob, filename);
+  };
+
+  // 添加参考图片（sora-2: 单图；veo_3_1-fast: 支持首尾帧数组）
+  if (supportsReferenceArray) {
+    if (options.startImage) {
+      await appendReference(options.startImage, 'reference-start.png', 'input_reference[]');
+    }
+    if (options.endImage) {
+      await appendReference(options.endImage, 'reference-end.png', 'input_reference[]');
+    }
+  } else if (options.startImage) {
+    await appendReference(options.startImage, 'reference.png', 'input_reference');
   }
 
   // 创建任务请求
