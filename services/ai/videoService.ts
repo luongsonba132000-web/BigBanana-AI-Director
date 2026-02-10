@@ -18,43 +18,50 @@ import {
 } from './apiCore';
 
 // ============================================
-// Sora 异步视频生成
+// 异步视频生成
 // ============================================
 
 /**
- * sora-2专用：使用异步API生成视频
+ * 异步视频生成（单图走 sora-2，双图走 veo_3_1-fast）
  * 流程：1. 创建任务 -> 2. 轮询状态 -> 3. 下载视频
  */
-const generateVideoWithSora2 = async (
+const generateVideoAsync = async (
   prompt: string,
   startImageBase64: string | undefined,
+  endImageBase64: string | undefined,
   apiKey: string,
   aspectRatio: AspectRatio = '16:9',
   duration: VideoDuration = 8,
   modelName: string = 'sora-2'
 ): Promise<string> => {
-  console.log(`🎬 使用异步模式生成视频 (${modelName}, ${aspectRatio}, ${duration}秒)...`);
+  const references = [startImageBase64, endImageBase64].filter(Boolean) as string[];
+  const useReferenceArray = references.length >= 2;
+  const resolvedModelName = useReferenceArray
+    ? 'veo_3_1-fast'
+    : references.length === 1
+      ? 'sora-2'
+      : modelName;
+
+  console.log(`🎬 使用异步模式生成视频 (${resolvedModelName}, ${aspectRatio}, ${duration}秒)...`);
 
   const videoSize = getSoraVideoSize(aspectRatio);
   const [VIDEO_WIDTH, VIDEO_HEIGHT] = videoSize.split('x').map(Number);
 
   console.log(`📐 视频尺寸: ${VIDEO_WIDTH}x${VIDEO_HEIGHT}`);
 
-  const apiBase = getApiBase('video', modelName);
+  const apiBase = getApiBase('video', resolvedModelName);
 
   // Step 1: 创建视频任务
   const formData = new FormData();
-  formData.append('model', modelName);
+  formData.append('model', resolvedModelName);
   formData.append('prompt', prompt);
   formData.append('seconds', String(duration));
   formData.append('size', videoSize);
 
-  if (startImageBase64) {
-    const cleanBase64 = startImageBase64.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
-
+  const appendReference = async (base64: string, filename: string, fieldName: string) => {
+    const cleanBase64 = base64.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
     console.log(`📐 调整参考图片尺寸至 ${VIDEO_WIDTH}x${VIDEO_HEIGHT}...`);
     const resizedBase64 = await resizeImageToSize(cleanBase64, VIDEO_WIDTH, VIDEO_HEIGHT);
-
     const byteCharacters = atob(resizedBase64);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -62,7 +69,17 @@ const generateVideoWithSora2 = async (
     }
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: 'image/png' });
-    formData.append('input_reference', blob, 'reference.png');
+    formData.append(fieldName, blob, filename);
+  };
+
+  if (useReferenceArray) {
+    await appendReference(references[0], 'reference-start.png', 'input_reference[]');
+    await appendReference(references[1], 'reference-end.png', 'input_reference[]');
+  } else if (references.length === 1) {
+    await appendReference(references[0], 'reference.png', 'input_reference');
+  }
+
+  if (references.length > 0) {
     console.log('✅ 参考图片已调整尺寸并添加');
   }
 
@@ -98,7 +115,7 @@ const generateVideoWithSora2 = async (
     throw new Error('创建视频任务失败：未返回任务ID');
   }
 
-  console.log('📋 sora-2任务已创建，任务ID:', taskId);
+  console.log(`📋 ${resolvedModelName} 任务已创建，任务ID:`, taskId);
 
   // Step 2: 轮询查询任务状态
   const maxPollingTime = 1200000; // 20分钟超时
@@ -126,7 +143,7 @@ const generateVideoWithSora2 = async (
     const statusData = await statusResponse.json();
     const status = statusData.status;
 
-    console.log('🔄 sora-2任务状态:', status, '进度:', statusData.progress);
+    console.log(`🔄 ${resolvedModelName} 任务状态:`, status, '进度:', statusData.progress);
 
     if (status === 'completed' || status === 'succeeded') {
       if (statusData.id && statusData.id.startsWith('video_')) {
@@ -153,7 +170,7 @@ const generateVideoWithSora2 = async (
     throw new Error('视频生成超时 (20分钟) 或未返回视频ID');
   }
 
-  console.log('✅ sora-2视频生成完成，视频ID:', videoId);
+  console.log(`✅ ${resolvedModelName} 视频生成完成，视频ID:`, videoId);
 
   // Step 3: 下载视频内容
   const maxDownloadRetries = 5;
@@ -194,7 +211,7 @@ const generateVideoWithSora2 = async (
           const reader = new FileReader();
           reader.onloadend = () => {
             const result = reader.result as string;
-            console.log('✅ sora-2视频已转换为base64格式');
+            console.log(`✅ ${resolvedModelName} 视频已转换为base64格式`);
             resolve(result);
           };
           reader.onerror = () => reject(new Error('视频转base64失败'));
@@ -209,7 +226,7 @@ const generateVideoWithSora2 = async (
         }
 
         const videoBase64 = await convertVideoUrlToBase64(videoUrl);
-        console.log('✅ sora-2视频已转换为base64格式');
+        console.log(`✅ ${resolvedModelName} 视频已转换为base64格式`);
         return videoBase64;
       }
     } catch (error: any) {
@@ -252,11 +269,22 @@ export const generateVideo = async (
   const requestModel = resolveRequestModel('video', model) || model;
   const apiKey = checkApiKey('video', model);
   const apiBase = getApiBase('video', model);
-  const isAsyncMode = (resolvedVideoModel?.params as any)?.mode === 'async' || requestModel === 'sora-2';
+  const isAsyncMode =
+    (resolvedVideoModel?.params as any)?.mode === 'async' ||
+    requestModel === 'sora-2' ||
+    requestModel === 'veo_3_1-fast';
 
-  // sora-2 使用异步API模式
+  // 异步模式
   if (isAsyncMode) {
-    return generateVideoWithSora2(prompt, startImageBase64, apiKey, aspectRatio, duration, requestModel || 'sora-2');
+    return generateVideoAsync(
+      prompt,
+      startImageBase64,
+      endImageBase64,
+      apiKey,
+      aspectRatio,
+      duration,
+      requestModel || 'sora-2'
+    );
   }
 
   // Veo 模型使用同步模式
